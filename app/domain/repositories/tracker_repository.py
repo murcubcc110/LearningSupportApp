@@ -24,5 +24,5 @@ class TrackerRepository(ABC):
         pass
 
     @abstractmethod
-    def update_record_status(self, tracker_id: int, day_number: int, status: str) -> Optional[DailyRecordEntity]:
+    def update_record_status(self, tracker_id: int, day_number: int, status: str, user_message: Optional[str] = None) -> Optional[DailyRecordEntity]:
         pass

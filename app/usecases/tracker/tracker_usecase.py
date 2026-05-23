@@ -55,7 +55,7 @@ class TrackerUseCase:
         new_tracker.records = records
         return self.repository.save(new_tracker)
 
-    def update_record(self, tracker_id: int, day_number: int, status: str) -> Optional[TrackerEntity]:
+    def update_record(self, tracker_id: int, day_number: int, status: str, user_message: Optional[str] = None) -> Optional[TrackerEntity]:
         """特定日のステータスを更新し、全履歴に基づきAIフィードバックを再生成します"""
         if status not in ["achieved", "slacked", "pending"]:
             raise ValueError("無効なステータス値です。")
@@ -64,8 +64,8 @@ class TrackerUseCase:
         if not tracker:
             return None
 
-        # 日々の達成状況を更新
-        self.repository.update_record_status(tracker_id, day_number, status)
+        # 日々の達成状況を更新（一言コメントも一緒に記録）
+        self.repository.update_record_status(tracker_id, day_number, status, user_message)
         
         # 最新のレコード一覧を再ロード
         updated_tracker = self.repository.get_by_id(tracker_id)
@@ -77,7 +77,8 @@ class TrackerUseCase:
             tracker_title=updated_tracker.title,
             period_days=updated_tracker.period_days,
             records=updated_tracker.records,
-            character=updated_tracker.character
+            character=updated_tracker.character,
+            current_user_message=user_message
         )
 
         # トラッカー側のAIコメント情報を更新

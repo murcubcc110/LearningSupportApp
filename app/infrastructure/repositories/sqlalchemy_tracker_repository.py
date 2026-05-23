@@ -19,7 +19,8 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
                 tracker_id=r.tracker_id,
                 day_number=r.day_number,
                 status=r.status,
-                recorded_at=r.recorded_at
+                recorded_at=r.recorded_at,
+                user_message=r.user_message
             ) for r in db_tracker.records
         ]
         return TrackerEntity(
@@ -67,6 +68,7 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
                 ).first()
                 if db_record:
                     db_record.status = record_entity.status
+                    db_record.user_message = record_entity.user_message
         else:
             # 新規トラッカーの作成
             db_tracker = TrackerDB(
@@ -88,7 +90,8 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
                     tracker_id=db_tracker.id,
                     day_number=record_entity.day_number,
                     status=record_entity.status,
-                    recorded_at=record_entity.recorded_at
+                    recorded_at=record_entity.recorded_at,
+                    user_message=record_entity.user_message
                 )
                 self.db.add(db_record)
         
@@ -104,7 +107,7 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
         self.db.commit()
         return True
 
-    def update_record_status(self, tracker_id: int, day_number: int, status: str) -> Optional[DailyRecordEntity]:
+    def update_record_status(self, tracker_id: int, day_number: int, status: str, user_message: Optional[str] = None) -> Optional[DailyRecordEntity]:
         db_record = self.db.query(DailyRecordDB).filter(
             DailyRecordDB.tracker_id == tracker_id,
             DailyRecordDB.day_number == day_number
@@ -112,6 +115,9 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
         if not db_record:
             return None
         db_record.status = status
+        # If user_message is provided, update it; if it is explicitly empty, we can still update it
+        if user_message is not None:
+            db_record.user_message = user_message
         self.db.commit()
         self.db.refresh(db_record)
         
@@ -120,5 +126,6 @@ class SQLAlchemyTrackerRepository(TrackerRepository):
             tracker_id=db_record.tracker_id,
             day_number=db_record.day_number,
             status=db_record.status,
-            recorded_at=db_record.recorded_at
+            recorded_at=db_record.recorded_at,
+            user_message=db_record.user_message
         )

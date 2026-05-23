@@ -33,6 +33,7 @@ class DailyRecordDB(Base):
     tracker_id = Column(Integer, ForeignKey("trackers.id", ondelete="CASCADE"), nullable=False)
     day_number = Column(Integer, nullable=False)
     status = Column(String, default="pending", nullable=False)  # "pending", "achieved", "slacked"
+    user_message = Column(String, nullable=True)
     recorded_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, nullable=False)
 
     tracker = relationship("TrackerDB", back_populates="records")

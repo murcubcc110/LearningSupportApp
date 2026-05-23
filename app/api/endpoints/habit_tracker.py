@@ -139,7 +139,7 @@ def update_record(
     usecase: TrackerUseCase = Depends(get_tracker_usecase)
 ):
     try:
-        updated_tracker = usecase.update_record(tracker_id, day_number, payload.status)
+        updated_tracker = usecase.update_record(tracker_id, day_number, payload.status, payload.user_message)
         if not updated_tracker:
             raise HTTPException(status_code=404, detail="トラッカーまたはレコードが見つかりません。")
             

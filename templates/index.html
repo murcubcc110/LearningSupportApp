@@ -343,6 +343,15 @@
                     <span class="text-xs text-slate-400">各日にちのボタンをクリックしてステータスを記録</span>
                 </div>
 
+                <!-- 今の一言入力エリア -->
+                <div class="mb-6 p-4 rounded-xl border border-indigo-500/20 bg-indigo-950/15">
+                    <label for="habit_user_message" class="block text-xs font-bold text-indigo-300 tracking-wider mb-2 flex items-center gap-1.5" id="habit_message_label">
+                        💬 {{ characters_map[active_tracker.character].name }}に「今の一言」を伝える（愚痴、困り事、今の気持ちなど）
+                    </label>
+                    <textarea id="habit_user_message" rows="2" placeholder="{% if active_tracker.character == 'ai_ch_02' %}例: 今日はちょっとサボりそうになっちゃった...{% else %}例: 昨日は忙しくてサボりそうになりましたが、なんとか5分だけ頑張りました！{% endif %}" 
+                              class="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-inner text-sm transition-all duration-300 resize-none"></textarea>
+                </div>
+
                 <!-- グリッド表示 -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="progress-grid">
                     {% for r in active_tracker.records %}
@@ -351,6 +360,24 @@
                         
                         <!-- 背景装飾用の光 -->
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950/90 pointer-events-none"></div>
+                        
+                        <!-- ホバーツールチップ（一言の表示） -->
+                        <div class="absolute top-2 right-2 z-20" id="tooltip-container-{{ r.day_number }}">
+                            {% if r.user_message %}
+                            <div class="relative group/tooltip">
+                                <span class="text-indigo-400 hover:text-indigo-300 cursor-help flex items-center justify-center p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 shadow-inner">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </span>
+                                <!-- 吹き出しツールチップ -->
+                                <div class="absolute bottom-full right-0 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-700/60 rounded-xl shadow-2xl opacity-0 translate-y-1 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:translate-y-0 group-hover/tooltip:visible transition-all duration-200 pointer-events-none text-left z-50">
+                                    <p class="text-[10px] font-bold text-indigo-400 mb-1 border-b border-slate-800 pb-0.5">DAY {{ r.day_number }} の一言</p>
+                                    <p class="text-[11px] text-slate-200 leading-normal font-medium break-words" id="tooltip-text-{{ r.day_number }}">{{ r.user_message }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                         
                         <!-- ステータスに合わせた枠線の変更 -->
                         <script>
@@ -457,8 +484,21 @@
         }
 
         // AJAXでステータスを更新する関数
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // AJAXでステータスを更新する関数
         async function updateRecordStatus(trackerId, dayNumber, newStatus) {
             try {
+                const userMessageInput = document.getElementById('habit_user_message');
+                const userMessage = userMessageInput ? userMessageInput.value : '';
+
                 // ローディング中のエフェクト（ボタンの不透明度を一時的に下げる）
                 const btnAchieved = document.getElementById(`btn-achieved-${dayNumber}`);
                 const btnSlacked = document.getElementById(`btn-slacked-${dayNumber}`);
@@ -470,7 +510,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ status: newStatus })
+                    body: JSON.stringify({ 
+                        status: newStatus,
+                        user_message: userMessage
+                    })
                 });
 
                 if (!response.ok) {
@@ -482,6 +525,34 @@
                 // --- 1. グリッドの各日カードを動的に更新 ---
                 const card = document.getElementById(`card-day-${dayNumber}`);
                 updateCardBorder(card, newStatus);
+
+                // 一言の吹き出し（ツールチップ）を動的追加/更新
+                const tooltipContainer = document.getElementById(`tooltip-container-${dayNumber}`);
+                if (tooltipContainer) {
+                    if (userMessage.trim()) {
+                        tooltipContainer.innerHTML = `
+                            <div class="relative group/tooltip">
+                                <span class="text-indigo-400 hover:text-indigo-300 cursor-help flex items-center justify-center p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 shadow-inner">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </span>
+                                <!-- 吹き出しツールチップ -->
+                                <div class="absolute bottom-full right-0 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-700/60 rounded-xl shadow-2xl opacity-0 translate-y-1 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:translate-y-0 group-hover/tooltip:visible transition-all duration-200 pointer-events-none text-left z-50">
+                                    <p class="text-[10px] font-bold text-indigo-400 mb-1 border-b border-slate-800 pb-0.5">DAY ${dayNumber} の一言</p>
+                                    <p class="text-[11px] text-slate-200 leading-normal font-medium break-words" id="tooltip-text-${dayNumber}">${escapeHTML(userMessage)}</p>
+                                </div>
+                            </div>
+                        `;
+                    } else if (newStatus === 'pending') {
+                        tooltipContainer.innerHTML = '';
+                    }
+                }
+
+                // テキストエリアをクリア
+                if (userMessageInput) {
+                    userMessageInput.value = '';
+                }
 
                 // アイコンの切り替え
                 const iconContainer = document.getElementById(`status-icon-container-${dayNumber}`);
@@ -707,6 +778,19 @@
                 if (katsuText) katsuText.innerText = `「${parsed.katsu}」`;
                 if (adviceBox) adviceBox.innerText = parsed.advice;
                 if (nextActionText) nextActionText.innerText = parsed.next_action_advice;
+
+                // テキストエリアのラベルとプレースホルダーの更新（キャラクター切り替えへの対応）
+                const habitMessageLabel = document.getElementById('habit_message_label');
+                const habitUserMessage = document.getElementById('habit_user_message');
+                if (habitMessageLabel && habitUserMessage) {
+                    const charName = data.character_name || (data.character === 'ai_ch_02' ? 'こはる' : '巌狼');
+                    habitMessageLabel.innerText = `💬 ${charName}に「今の一言」を伝える（愚痴、困り事、今の気持ちなど）`;
+                    if (data.character === 'ai_ch_02') {
+                        habitUserMessage.placeholder = '例: 今日はちょっとサボりそうになっちゃった...';
+                    } else {
+                        habitUserMessage.placeholder = '例: 昨日は忙しくてサボりそうになりましたが、なんとか5分だけ頑張りました！';
+                    }
+                }
 
                 // フェードイン効果の適用
                 fadeTargets.forEach(el => {

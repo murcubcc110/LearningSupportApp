@@ -13,14 +13,11 @@ from app.core.config import settings
 from app.infrastructure.database.habit_tracker_db import Base as HTBase, engine as HTEngine, SessionLocal as HTSessionLocal
 from app.infrastructure.database.models.habit_tracker import TrackerDB, DailyRecordDB, CharacterDB
 
-from app.infrastructure.database.learning_support_db import Base as LSBase, engine as LSEngine, SessionLocal as LSSessionLocal
-from app.infrastructure.database.models.learning_support import UserStatsDB, HistoryDB
-
 # リポジトリ・ユースケース・ルーター
-from app.infrastructure.repositories.sqlalchemy_user_stats_repository import SQLAlchemyUserStatsRepository
+from app.infrastructure.repositories.sqlalchemy_tracker_repository import SQLAlchemyTrackerRepository
 from app.infrastructure.ai.llm_feedback_service import LLMFeedbackService
-from app.usecases.learning_support.learning_support_usecase import LearningSupportUseCase
-from app.api.endpoints import habit_tracker, omikuji
+from app.usecases.tracker.tracker_usecase import TrackerUseCase
+from app.api.endpoints import habit_tracker
 
 # ログの設定
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +32,19 @@ app = FastAPI(
 def init_databases():
     # テーブル自動生成
     HTBase.metadata.create_all(bind=HTEngine)
-    LSBase.metadata.create_all(bind=LSEngine)
+    
+    # 既存DBテーブルへカラム user_message を動的に追加（SQLiteマイグレーション）
+    try:
+        import sqlalchemy
+        inspector = sqlalchemy.inspect(HTEngine)
+        columns = [col['name'] for col in inspector.get_columns('daily_records')]
+        if 'user_message' not in columns:
+            with HTEngine.connect() as conn:
+                conn.execute(sqlalchemy.text("ALTER TABLE daily_records ADD COLUMN user_message TEXT"))
+                conn.commit()
+            logger.info("Database migration: Added user_message column to daily_records table.")
+    except Exception as migration_err:
+        logger.error(f"Error during SQLite migration: {migration_err}")
     
     # キャラクター初期データシード
     db = HTSessionLocal()
@@ -82,25 +91,10 @@ def init_databases():
     finally:
         db.close()
 
-def run_startup_cleanup():
-    db = LSSessionLocal()
-    try:
-        repo = SQLAlchemyUserStatsRepository(db)
-        ai_service = LLMFeedbackService()
-        usecase = LearningSupportUseCase(repo, ai_service)
-        deleted_count = usecase.cleanup_old_data()
-        if deleted_count > 0:
-            logger.info(f"Old history cleaned up: {deleted_count} records deleted.")
-    except Exception as e:
-        logger.error(f"Error during startup history cleanup: {e}")
-    finally:
-        db.close()
-
 # アプリ起動時処理
 @app.on_event("startup")
 def startup_event():
     init_databases()
-    run_startup_cleanup()
 
 # CORS設定
 app.add_middleware(
@@ -114,14 +108,8 @@ app.add_middleware(
 # 静的ファイルの設定
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# おみくじの静的UIショートカットパス (便利アクセスのため)
-@app.get("/omikuji-ui")
-async def omikuji_ui():
-    return FileResponse(os.path.join("static", "index.html"))
-
 # ルーターの登録
 app.include_router(habit_tracker.router, tags=["Habit Tracker"])
-app.include_router(omikuji.router, tags=["Omikuji"])
 
 if __name__ == "__main__":
     import uvicorn

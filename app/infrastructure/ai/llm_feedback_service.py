@@ -3,9 +3,8 @@ import os
 import random
 import json
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from app.domain.entities.tracker import DailyRecordEntity
-from app.domain.entities.learning_support import HistoryEntity
 from app.usecases.ports.ai_feedback_service import AIFeedbackService
 from app.infrastructure.llm_client import LLMClient
 from app.core.config import settings
@@ -98,7 +97,8 @@ class LLMFeedbackService(AIFeedbackService):
         tracker_title: str,
         period_days: int,
         records: List[DailyRecordEntity],
-        character: str
+        character: str,
+        current_user_message: Optional[str] = None
     ) -> Tuple[str, str]:
         # 進捗を分析
         latest_status, max_consecutive = self._analyze_progress(records)
@@ -118,11 +118,12 @@ class LLMFeedbackService(AIFeedbackService):
             category = "encourage"
 
         try:
-            # 履歴情報の文字列化
+            # 履歴情報の文字列化（過去の一言も含める）
             history_str = ""
             for r in sorted(records, key=lambda x: x.day_number):
                 status_ja = "達成" if r.status == "achieved" else "サボり" if r.status == "slacked" else "未入力"
-                history_str += f"  - {r.day_number}日目: {status_ja}\n"
+                comment_ja = f" (ユーザーの一言: 『{r.user_message}』)" if getattr(r, 'user_message', None) else ""
+                history_str += f"  - {r.day_number}日目: {status_ja}{comment_ja}\n"
 
             # キャラクター別システムプロンプトの読み込み
             system_instruction = None
@@ -143,14 +144,16 @@ class LLMFeedbackService(AIFeedbackService):
             if category == "total_review":
                 achieved_count = sum(1 for r in records if r.status == "achieved")
                 achievement_rate = round((achieved_count / len(records)) * 100) if records else 0
+                comment_part = f"【本日のユーザーの最後の一言】\n『{current_user_message}』\n\n" if current_user_message else ""
                 user_prompt = (
-                    f"【習慣習慣チャレンジ 最終結果】\n"
+                    f"【習慣チャレンジ 最終結果】\n"
                     f"・習慣名: {tracker_title}\n"
                     f"・設定期間: {period_days}日間\n"
                     f"【最終進捗履歴】\n"
                     f"{history_str}"
                     f"・達成率: {achievement_rate}%\n"
                     f"・最大連続達成日数: {max_consecutive}日\n\n"
+                    f"{comment_part}"
                     f"【命令】\n"
                     f"本日ですべての期間の入力が完了（チャレンジ終了）しました。これまでの取り組みに対する【最終総評】を行ってください。\n"
                     f"ユーザーの達成状況（達成率: {achievement_rate}%）に基づき、以下のトーンで総評してください。\n"
@@ -159,6 +162,7 @@ class LLMFeedbackService(AIFeedbackService):
                     f"必ず指示されたJSONフォーマットのみを出力し、説明文は一切含めないでください。"
                 )
             else:
+                comment_part = f"【本日のユーザーの一言】\n『{current_user_message}』\n\n" if current_user_message else ""
                 user_prompt = (
                     f"【習慣チャレンジ情報】\n"
                     f"・習慣名: {tracker_title}\n"
@@ -167,9 +171,10 @@ class LLMFeedbackService(AIFeedbackService):
                     f"{history_str}"
                     f"・最大連続達成日数: {max_consecutive}日\n"
                     f"・直近のアクション: {'サボってしまった(未達成)' if latest_status == 'slacked' else '達成した' if latest_status == 'achieved' else '未入力'}\n\n"
+                    f"{comment_part}"
                     f"【命令】\n"
                     f"ユーザーの現在の状況（判定カテゴリ: '{category}'）に応じたフィードバックを行ってください。\n"
-                    f"・'scold'の場合: 厳しく叱り、奮起させる内容（mioの場合は心配したしたしなめ方）\n"
+                    f"・'scold'の場合: 厳しく叱り、奮起させる内容（mioの場合は心配したしなめ方）\n"
                     f"・'praise'の場合: 5日連続達成を盛大に称賛・大絶賛する内容\n"
                     f"・'encourage'の場合: 継続を称え、温かく標準的に励ます内容\n\n"
                     f"必ず指示されたJSONフォーマットのみを出力し、説明文は一切含めないでください。"
@@ -215,81 +220,4 @@ class LLMFeedbackService(AIFeedbackService):
 
         return json.dumps(fallback_data, ensure_ascii=False), category
 
-    def generate_omikuji_feedback(
-        self,
-        character_id: str,
-        consecutive_days: int,
-        followed_plan: bool,
-        user_message: str,
-        history: List[HistoryEntity]
-    ) -> Tuple[str, str, str, str]:
-        # システムプロンプトの取得
-        system_instruction = None
-        db = SessionLocal()
-        try:
-            char_db = db.query(CharacterDB).filter(CharacterDB.id == character_id).first()
-            if char_db:
-                system_instruction = f"{char_db.system_prompt}\n\n{COMMON_JSON_FORMAT}"
-        except Exception as db_err:
-            logger.error(f"Error fetching character prompt from DB: {db_err}")
-        finally:
-            db.close()
 
-        if not system_instruction:
-            system_instruction = SYSTEM_PROMPTS.get(character_id, SYSTEM_PROMPTS["ai_ch_01"])
-
-        # ユーザープロンプトの構築
-        prompt = "【過去のやり取り】\n"
-        if history:
-            for h in history:
-                prompt += f"- {h.timestamp.strftime('%Y-%m-%d')}: {h.user_message} (結果: {h.fortune}, アドバイス: {h.advice[:100]}...)\n"
-        else:
-            prompt += "なし\n"
-            
-        prompt += f"\n【現在の状況】\n"
-        prompt += f"- 連続継続日数：{consecutive_days}日\n"
-        prompt += f"- 計画の達成状況：{'計画通り進められた' if followed_plan else '計画通り進められなかった'}\n"
-        prompt += f"- ユーザーの一言：『{user_message}』\n\n"
-        
-        prompt += "【指示】\n"
-        prompt += "過去のやり取りを踏まえ、ユーザーの傾向（サボりがち、継続できている等）を把握した上でアドバイスを行ってください。\n"
-        
-        if character_id == "ai_ch_02":
-            if not followed_plan:
-                prompt += "・計画通りに進められなかったみたい。お姉さんとして優しく、でも少し寂しそうに叱ってあげて。\n"
-            if consecutive_days >= 7:
-                prompt += f"・{consecutive_days}日も続いてるなんて、自分のことのように喜んで褒めちぎってあげて。\n"
-            prompt += "・こはるとして、計画に対するおみくじの結果をJSONで返してね。"
-        else:
-            if not followed_plan:
-                prompt += "・計画をサボっている。冒頭で厳しく叱責せよ。\n"
-            if consecutive_days >= 7:
-                prompt += f"・{consecutive_days}日も続いていることは、少しだけ（ツンデレ気味に）認めてやれ。\n"
-            prompt += "・巌狼として、計画に対するおみくじの結果をJSONで返せ。"
-
-        try:
-            # LLM呼び出し
-            json_response = self.llm_client.generate_json_response(system_instruction, prompt)
-            
-            fortune = json_response.get("fortune", random.choice(self.fortunes))
-            katsu = json_response.get("katsu", "喝！" if character_id == "ai_ch_01" else "あらあら")
-            advice = json_response.get("advice", "精進せよ。" if character_id == "ai_ch_01" else "無理しないでね。")
-            next_action_advice = json_response.get("next_action_advice", "まずは机に向かうのだ。" if character_id == "ai_ch_01" else "ゆっくり準備しようね。")
-            
-            return fortune, katsu, advice, next_action_advice
-
-        except Exception as e:
-            logger.error(f"Omikuji LLM Generation error (falling back to rule-based): {str(e)}")
-
-        # --- ルールベースのフォールバック ---
-        fortune = random.choice(self.fortunes)
-        if character_id == "ai_ch_02":
-            katsu = "あらあら"
-            advice = "無理しないでね。ボチボチいこな。"
-            next_action_advice = "ゆっくり準備しようね。"
-        else:
-            katsu = "喝！"
-            advice = "精進せよ。甘えを捨てよ。"
-            next_action_advice = "まずは机に向かうのだ。"
-
-        return fortune, katsu, advice, next_action_advice

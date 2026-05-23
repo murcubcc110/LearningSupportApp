@@ -13,13 +13,15 @@ class DailyRecordEntity:
         tracker_id: int,
         day_number: int,
         status: str,
-        recorded_at: datetime
+        recorded_at: datetime,
+        user_message: Optional[str] = None
     ):
         self.id = id
         self.tracker_id = tracker_id
         self.day_number = day_number
         self.status = status  # "pending", "achieved", "slacked"
         self.recorded_at = recorded_at
+        self.user_message = user_message
 
 
 class TrackerEntity:
