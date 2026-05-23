@@ -89,13 +89,13 @@ def read_root(
     characters_map = {c.id: c for c in characters_db}
     
     # 万が一シードデータが存在しない場合のフォールバック用ダミークラス
-    if "ogami" not in characters_map:
+    if "ai_ch_01" not in characters_map:
         class DummyChar:
             def __init__(self, name, avatar_url):
                 self.name = name
                 self.avatar_url = avatar_url
-        characters_map["ogami"] = DummyChar("大神様", "/static/ogami_sama.png")
-        characters_map["mio"] = DummyChar("ミオ", "/static/mio.png")
+        characters_map["ai_ch_01"] = DummyChar("巌狼", "/static/ogami_sama.png")
+        characters_map["ai_ch_02"] = DummyChar("こはる", "/static/mio.png")
 
     return templates.TemplateResponse(
         request=request,
@@ -146,8 +146,8 @@ def update_record(
         stats = updated_tracker.calculate_stats()
         
         char_db = db.query(CharacterDB).filter(CharacterDB.id == updated_tracker.character).first()
-        char_name = char_db.name if char_db else ("ミオ" if updated_tracker.character == "mio" else "大神様")
-        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "mio" else "/static/ogami_sama.png")
+        char_name = char_db.name if char_db else ("こはる" if updated_tracker.character == "ai_ch_02" else "巌狼")
+        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "ai_ch_02" else "/static/ogami_sama.png")
         
         return JSONResponse(content={
             "status": "success",
@@ -181,8 +181,8 @@ def update_character(
         stats = updated_tracker.calculate_stats()
         
         char_db = db.query(CharacterDB).filter(CharacterDB.id == updated_tracker.character).first()
-        char_name = char_db.name if char_db else ("ミオ" if updated_tracker.character == "mio" else "大神様")
-        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "mio" else "/static/ogami_sama.png")
+        char_name = char_db.name if char_db else ("こはる" if updated_tracker.character == "ai_ch_02" else "巌狼")
+        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "ai_ch_02" else "/static/ogami_sama.png")
         
         return JSONResponse(content={
             "status": "success",
@@ -321,14 +321,14 @@ def reset_character_settings(
 
     from app.core.prompts import SYSTEM_PROMPTS, COMMON_JSON_FORMAT
 
-    if character_id == "ogami":
-        character.name = "大神様"
+    if character_id == "ai_ch_01":
+        character.name = "巌狼"
         character.avatar_url = "/static/ogami_sama.png"
-        character.system_prompt = SYSTEM_PROMPTS["ogami"].replace(COMMON_JSON_FORMAT, "").strip()
-    elif character_id == "mio":
-        character.name = "ミオ"
+        character.system_prompt = SYSTEM_PROMPTS["ai_ch_01"].replace(COMMON_JSON_FORMAT, "").strip()
+    elif character_id == "ai_ch_02":
+        character.name = "こはる"
         character.avatar_url = "/static/mio.png"
-        character.system_prompt = SYSTEM_PROMPTS["mio"].replace(COMMON_JSON_FORMAT, "").strip()
+        character.system_prompt = SYSTEM_PROMPTS["ai_ch_02"].replace(COMMON_JSON_FORMAT, "").strip()
     else:
         raise HTTPException(status_code=400, detail="無効なキャラクターIDです。")
 

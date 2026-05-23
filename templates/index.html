@@ -269,15 +269,15 @@
                             <div class="flex items-center gap-3">
                                 <!-- キャラクターセレクター -->
                                 <div class="flex items-center gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80">
-                                    <button onclick="changeCharacter('ogami')" id="btn-char-ogami" 
-                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'ogami' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
-                                        <img id="btn-char-img-ogami" src="{{ characters_map['ogami'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
-                                        <span id="btn-char-name-ogami">{{ characters_map['ogami'].name }}</span> 🐺
+                                    <button onclick="changeCharacter('ai_ch_01')" id="btn-char-ai_ch_01" 
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'ai_ch_01' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
+                                        <img id="btn-char-img-ai_ch_01" src="{{ characters_map['ai_ch_01'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
+                                        <span id="btn-char-name-ai_ch_01">{{ characters_map['ai_ch_01'].name }}</span> 🐺
                                     </button>
-                                    <button onclick="changeCharacter('mio')" id="btn-char-mio" 
-                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'mio' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
-                                        <img id="btn-char-img-mio" src="{{ characters_map['mio'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
-                                        <span id="btn-char-name-mio">{{ characters_map['mio'].name }}</span> 🌸
+                                    <button onclick="changeCharacter('ai_ch_02')" id="btn-char-ai_ch_02" 
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'ai_ch_02' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
+                                        <img id="btn-char-img-ai_ch_02" src="{{ characters_map['ai_ch_02'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
+                                        <span id="btn-char-name-ai_ch_02">{{ characters_map['ai_ch_02'].name }}</span> 🌸
                                     </button>
                                     <!-- 設定ギアボタン -->
                                     <button onclick="openCharacterSettingsModal()" 
@@ -551,8 +551,8 @@
 
             try {
                 // キャラクターボタンの状態を一時的に無効化
-                const btnOgami = document.getElementById("btn-char-ogami");
-                const btnMio = document.getElementById("btn-char-mio");
+                const btnOgami = document.getElementById("btn-char-ai_ch_01");
+                const btnMio = document.getElementById("btn-char-ai_ch_02");
                 if (btnOgami) btnOgami.style.opacity = "0.7";
                 if (btnMio) btnMio.style.opacity = "0.7";
 
@@ -580,8 +580,8 @@
             } catch (error) {
                 console.error('Error changing character:', error);
                 alert('キャラクターの切り替えに失敗しました。');
-                const btnOgami = document.getElementById("btn-char-ogami");
-                const btnMio = document.getElementById("btn-char-mio");
+                const btnOgami = document.getElementById("btn-char-ai_ch_01");
+                const btnMio = document.getElementById("btn-char-ai_ch_02");
                 if (btnOgami) btnOgami.style.opacity = "1";
                 if (btnMio) btnMio.style.opacity = "1";
             }
@@ -595,8 +595,8 @@
             const aiBadge = document.getElementById('ai-badge');
             const aiStatusLabel = document.getElementById('ai-status-label');
             
-            const btnOgami = document.getElementById('btn-char-ogami');
-            const btnMio = document.getElementById('btn-char-mio');
+            const btnOgami = document.getElementById('btn-char-ai_ch_01');
+            const btnMio = document.getElementById('btn-char-ai_ch_02');
             
             const fortuneBadge = document.getElementById('ai-fortune-badge');
             const fortuneText = document.getElementById('ai-fortune-text');
@@ -611,7 +611,7 @@
             setTimeout(() => {
                 // 1. キャラクター切り替えボタンのアクティブ表示更新
                 if (btnOgami && btnMio) {
-                    if (data.character === 'ogami') {
+                    if (data.character === 'ai_ch_01') {
                         btnOgami.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 bg-indigo-500 text-white shadow-md";
                         btnMio.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 text-slate-400 hover:text-slate-200";
                     } else {
@@ -622,7 +622,7 @@
 
                 // 2. アバター画像の更新
                 if (aiAvatarImg) {
-                    aiAvatarImg.src = data.character_avatar || (data.character === 'mio' ? '/static/mio.png' : '/static/ogami_sama.png');
+                    aiAvatarImg.src = data.character_avatar || (data.character === 'ai_ch_02' ? '/static/mio.png' : '/static/ogami_sama.png');
                 }
 
                 // 3. AIステータス（praise, scold, encourage, total_review）に応じた枠線の切り替え
@@ -737,10 +737,10 @@
                     modal.classList.remove('hidden');
                     
                     // 初期表示するキャラクターのID（現在選択中のキャラクター）
-                    let currentActive = 'ogami';
-                    const btnMio = document.getElementById('btn-char-mio');
+                    let currentActive = 'ai_ch_01';
+                    const btnMio = document.getElementById('btn-char-ai_ch_02');
                     if (btnMio && btnMio.classList.contains('bg-indigo-500')) {
-                        currentActive = 'mio';
+                        currentActive = 'ai_ch_02';
                     }
                     
                     switchModalTab(currentActive);
@@ -763,7 +763,7 @@
             const tabOgami = document.getElementById('modal-tab-ogami');
             const tabMio = document.getElementById('modal-tab-mio');
             
-            if (charId === 'ogami') {
+            if (charId === 'ai_ch_01') {
                 tabOgami.className = "flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center";
                 tabMio.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center";
             } else {
@@ -915,8 +915,8 @@
                 if (btnName) btnName.innerText = updatedChar.name;
                 
                 // 現在アクティブなキャラクターが更新された場合、AI Coachのアバターも更新
-                const isActive = (charId === 'ogami' && document.getElementById('btn-char-ogami').classList.contains('bg-indigo-500')) ||
-                                 (charId === 'mio' && document.getElementById('btn-char-mio').classList.contains('bg-indigo-500'));
+                const isActive = (charId === 'ai_ch_01' && document.getElementById('btn-char-ai_ch_01').classList.contains('bg-indigo-500')) ||
+                                 (charId === 'ai_ch_02' && document.getElementById('btn-char-ai_ch_02').classList.contains('bg-indigo-500'));
                                  
                 if (isActive) {
                     const aiAvatarImg = document.getElementById('ai-avatar-img');
@@ -978,8 +978,8 @@
                 if (btnImg) btnImg.src = updatedChar.avatar_url;
                 if (btnName) btnName.innerText = updatedChar.name;
                 
-                const isActive = (charId === 'ogami' && document.getElementById('btn-char-ogami').classList.contains('bg-indigo-500')) ||
-                                 (charId === 'mio' && document.getElementById('btn-char-mio').classList.contains('bg-indigo-500'));
+                const isActive = (charId === 'ai_ch_01' && document.getElementById('btn-char-ai_ch_01').classList.contains('bg-indigo-500')) ||
+                                 (charId === 'ai_ch_02' && document.getElementById('btn-char-ai_ch_02').classList.contains('bg-indigo-500'));
                                  
                 if (isActive) {
                     const aiAvatarImg = document.getElementById('ai-avatar-img');
@@ -1044,18 +1044,18 @@
 
             <!-- モーダルコンテンツ (タブナビゲーション) -->
             <div class="flex border-b border-slate-800/80 bg-slate-950/20">
-                <button id="modal-tab-ogami" type="button" onclick="switchModalTab('ogami')" class="flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center">
-                    キャラクターA（旧: 大神様）
+                <button id="modal-tab-ogami" type="button" onclick="switchModalTab('ai_ch_01')" class="flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center">
+                    キャラクターA（デフォルト: 巌狼）
                 </button>
-                <button id="modal-tab-mio" type="button" onclick="switchModalTab('mio')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center">
-                    キャラクターB（旧: ミオ）
+                <button id="modal-tab-mio" type="button" onclick="switchModalTab('ai_ch_02')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center">
+                    キャラクターB（デフォルト: こはる）
                 </button>
             </div>
 
             <!-- フォームエリア -->
             <form id="char-settings-form" onsubmit="saveCharacterSettings(event)" class="flex-grow flex flex-col overflow-y-auto p-6 space-y-6">
                 <!-- 選択中のキャラクターID保持用非表示フィールド -->
-                <input type="hidden" id="edit-char-id" value="ogami">
+                <input type="hidden" id="edit-char-id" value="ai_ch_01">
 
                 <!-- 1. 画像アップロードとプレビュー -->
                 <div class="flex items-center gap-6" id="avatar-upload-section">
@@ -1110,7 +1110,7 @@
                         <label for="edit-char-prompt" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">キャラクター設定・口調（プロンプト）</label>
                         <span class="text-[10px] text-indigo-400 font-medium">※ JSONフォーマット指示は自動付与されるため不要です。</span>
                     </div>
-                    <textarea id="edit-char-prompt" required placeholder="一人称、性格、口調、ユーザーの行動に対するフィードバック方針を記述します。例：貴様は『大神様』だ。語尾は『～だ』にせよ..."
+                    <textarea id="edit-char-prompt" required placeholder="一人称、性格、口調、ユーザーの行動に対するフィードバック方針を記述します。例：貴様は『巌狼』だ。語尾は『～だ』にせよ..."
                               class="w-full h-48 px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-inner text-sm transition-all-300 font-mono resize-none leading-relaxed"></textarea>
                 </div>
 

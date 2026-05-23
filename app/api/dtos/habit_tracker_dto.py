@@ -8,4 +8,4 @@ class RecordUpdateDTO(BaseModel):
 
 class CharacterUpdateDTO(BaseModel):
     """キャラクター更新リクエストDTO"""
-    character: str = Field(..., description="選択されたキャラクター ('ogami', 'mio')")
+    character: str = Field(..., description="選択されたキャラクター ('ai_ch_01', 'ai_ch_02')")

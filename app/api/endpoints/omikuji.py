@@ -35,7 +35,7 @@ async def get_omikuji(
             next_action_advice=history_entity.next_action_advice
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"大神様の御神託を得られませんでした: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"御神託を得られませんでした: {str(e)}")
 
 @router.get("/user/{user_id}/stats", response_model=UserStats)
 async def get_user_stats(

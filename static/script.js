@@ -1,4 +1,4 @@
-let selectedChar = 'ogami';
+let selectedChar = 'ai_ch_01';
 
 // キャラクター選択の制御
 document.querySelectorAll('.char-option').forEach(option => {
@@ -14,15 +14,15 @@ document.querySelectorAll('.char-option').forEach(option => {
         const title = document.querySelector('.title-area h1');
         const desc = document.querySelector('.title-area p');
         
-        if (selectedChar === 'mio') {
+        if (selectedChar === 'ai_ch_02') {
             avatar.src = '/static/mio.png';
-            avatar.alt = 'ミオ';
-            title.textContent = 'ミオの癒やしとお導き';
+            avatar.alt = 'こはる';
+            title.textContent = 'こはるの癒やしとお導き';
             desc.textContent = 'お姉さんのように、時にはお母さんのように見守るよ';
         } else {
             avatar.src = '/static/ogami_sama.png';
-            avatar.alt = '大神様';
-            title.textContent = '大神様の愛の鞭';
+            avatar.alt = '巌狼';
+            title.textContent = '巌狼の愛の鞭';
             desc.textContent = '山の神の使い、白狼が貴様の甘えを断つ';
         }
     });
@@ -67,7 +67,7 @@ document.getElementById('btn-generate').addEventListener('click', async () => {
     const userMessage = document.getElementById('user_message').value;
 
     if (!userMessage.trim()) {
-        alert("大神様（またはミオ）に何か言葉を捧げよ。");
+        alert("巌狼（またはこはる）に何か言葉を捧げよ。");
         return;
     }
 

@@ -43,41 +43,95 @@ def init_databases():
         columns = [col['name'] for col in inspector.get_columns('trackers')]
         if 'character' not in columns:
             with HTEngine.connect() as conn:
-                conn.execute(text("ALTER TABLE trackers ADD COLUMN character VARCHAR DEFAULT 'ogami'"))
+                conn.execute(text("ALTER TABLE trackers ADD COLUMN character VARCHAR DEFAULT 'ai_ch_01'"))
                 conn.commit()
             logger.info("Migration successful: added 'character' column to 'trackers'")
+        else:
+            with HTEngine.connect() as conn:
+                conn.execute(text("UPDATE trackers SET character = 'ai_ch_01' WHERE character = 'ogami'"))
+                conn.execute(text("UPDATE trackers SET character = 'ai_ch_02' WHERE character = 'mio'"))
+                conn.commit()
+            logger.info("Migration successful: updated 'character' column values to new IDs")
     except Exception as e:
         logger.error(f"Migration error: {e}")
 
     # キャラクター初期データシード
     db = HTSessionLocal()
     try:
-        if db.query(CharacterDB).count() == 0:
-            from app.core.prompts import SYSTEM_PROMPTS, COMMON_JSON_FORMAT
-            
-            # ogami prompt excluding COMMON_JSON_FORMAT
-            ogami_prompt = SYSTEM_PROMPTS["ogami"].replace(COMMON_JSON_FORMAT, "").strip()
-            # mio prompt excluding COMMON_JSON_FORMAT
-            mio_prompt = SYSTEM_PROMPTS["mio"].replace(COMMON_JSON_FORMAT, "").strip()
-            
+        from app.core.prompts import SYSTEM_PROMPTS, COMMON_JSON_FORMAT
+        
+        # ai_ch_01 prompt excluding COMMON_JSON_FORMAT
+        ogami_prompt = SYSTEM_PROMPTS["ai_ch_01"].replace(COMMON_JSON_FORMAT, "").strip()
+        # ai_ch_02 prompt excluding COMMON_JSON_FORMAT
+        mio_prompt = SYSTEM_PROMPTS["ai_ch_02"].replace(COMMON_JSON_FORMAT, "").strip()
+        
+        # 古いIDのキャラクターがあれば移行して削除する
+        old_ogami = db.query(CharacterDB).filter(CharacterDB.id == "ogami").first()
+        if old_ogami:
+            logger.info("Found old character 'ogami'. Migrating to 'ai_ch_01'...")
+            # 新しいIDで作成
+            new_ogami = CharacterDB(
+                id="ai_ch_01",
+                name="巌狼",
+                avatar_url=old_ogami.avatar_url,
+                system_prompt=ogami_prompt
+            )
+            db.delete(old_ogami)
+            db.commit()
+            db.add(new_ogami)
+            db.commit()
+
+        old_mio = db.query(CharacterDB).filter(CharacterDB.id == "mio").first()
+        if old_mio:
+            logger.info("Found old character 'mio'. Migrating to 'ai_ch_02'...")
+            # 新しいIDで作成
+            new_mio = CharacterDB(
+                id="ai_ch_02",
+                name="こはる",
+                avatar_url=old_mio.avatar_url,
+                system_prompt=mio_prompt
+            )
+            db.delete(old_mio)
+            db.commit()
+            db.add(new_mio)
+            db.commit()
+        
+        ogami = db.query(CharacterDB).filter(CharacterDB.id == "ai_ch_01").first()
+        if not ogami:
             ogami = CharacterDB(
-                id="ogami",
-                name="大神様",
+                id="ai_ch_01",
+                name="巌狼",
                 avatar_url="/static/ogami_sama.png",
                 system_prompt=ogami_prompt
             )
+            db.add(ogami)
+            logger.info("Database seeded: ai_ch_01 added.")
+        elif ogami.name == "大神様":
+            ogami.name = "巌狼"
+            ogami.system_prompt = ogami_prompt
+            db.add(ogami)
+            logger.info("Database migration: updated ai_ch_01 name and prompt to default.")
+
+        mio = db.query(CharacterDB).filter(CharacterDB.id == "ai_ch_02").first()
+        if not mio:
             mio = CharacterDB(
-                id="mio",
-                name="ミオ",
+                id="ai_ch_02",
+                name="こはる",
                 avatar_url="/static/mio.png",
                 system_prompt=mio_prompt
             )
-            db.add(ogami)
             db.add(mio)
-            db.commit()
-            logger.info("Database seeded: default characters added.")
+            logger.info("Database seeded: ai_ch_02 added.")
+        elif mio.name == "ミオ":
+            mio.name = "こはる"
+            mio.system_prompt = mio_prompt
+            db.add(mio)
+            logger.info("Database migration: updated ai_ch_02 name and prompt to default.")
+            
+        db.commit()
     except Exception as e:
-        logger.error(f"Error seeding characters: {e}")
+        logger.error(f"Error seeding/migrating characters: {e}")
+        db.rollback()
     finally:
         db.close()
 

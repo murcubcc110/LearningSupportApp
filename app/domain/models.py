@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 class OmikujiRequest(BaseModel):
     user_id: str = Field(..., description="ユーザーの識別子")
-    character_id: str = Field("ogami", description="キャラクターID (ogami or mio)")
+    character_id: str = Field("ai_ch_01", description="キャラクターID (ai_ch_01 or ai_ch_02)")
     consecutive_days: int = Field(..., description="連続ログイン日数")
     followed_plan: bool = Field(..., description="計画通りに進められたか")
     user_message: str = Field(..., description="ユーザーの一言")

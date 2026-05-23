@@ -37,7 +37,7 @@ class TrackerUseCase:
             created_at=datetime.now(),
             ai_comment="新しいチャレンジが始まりました！まずは1日目を達成して、好スタートを切りましょう！🚀",
             ai_status="encourage",
-            character="ogami"
+            character="ai_ch_01"
         )
         
         # 1日から設定期間分の日々の記録を「未入力」の状態で生成
@@ -87,8 +87,8 @@ class TrackerUseCase:
         return self.repository.save(updated_tracker)
 
     def update_character(self, tracker_id: int, character: str) -> Optional[TrackerEntity]:
-        """キャラクター（大神様/ミオ）を切り替え、AIアドバイスを再計算します"""
-        if character not in ["ogami", "mio"]:
+        """キャラクター（巌狼/こはる）を切り替え、AIアドバイスを再計算します"""
+        if character not in ["ai_ch_01", "ai_ch_02"]:
             raise ValueError("無効なキャラクター値です。")
 
         tracker = self.repository.get_by_id(tracker_id)

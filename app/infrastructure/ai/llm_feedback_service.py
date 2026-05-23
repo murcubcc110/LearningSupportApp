@@ -21,7 +21,7 @@ class LLMFeedbackService(AIFeedbackService):
     接続失敗やパース失敗時には高品質なキャラクター固有のルールベース応答にフォールバックします。
     """
     
-    # --- 大神様 (ogami) ルールベーステンプレート ---
+    # --- 巌狼 (ogami) ルールベーステンプレート ---
     OGAMI_PRAISE = [
         {"fortune": "大吉", "katsu": "実に見事だ！我も称賛してやろう！🐺", "advice": "5日連続達成とは、貴様の意志も捨てたものではないな。この調子で栄光のゴールへ突き進むが良い！", "next_action_advice": "この勢いを止めるな。明日も決まった時間にPCの前に座るのだ！"},
         {"fortune": "大吉", "katsu": "圧倒的継続！白狼の加護を授けよう！✨", "advice": "5日連続でやり遂げるとはな。貴様の心に潜む甘えを完全に克服しつつある。この光り輝く記録を汚すことのないよう、精進せよ！", "next_action_advice": "明日の朝一番に、今日の成功要因を手帳に書き留めておくのだ！"}
@@ -41,7 +41,7 @@ class LLMFeedbackService(AIFeedbackService):
         {"fortune": "凶", "katsu": "終幕！だがこの結果で満足しているわけではあるまいな！🔥", "advice": "すべての記録が終わったが、達成率80%未満とは何事だ。サボった日々の重みを今一度噛み締めるが良い。だが、途中で投げ出さずに最後まで記録しきった執念だけは認めてやる。次こそは完全なる勝利を掴み取るのだ！", "next_action_advice": "今回の敗因（サボりグセ）をノートに書き出し、明日から新たな闘い（再チャレンジ）を開始せよ！"}
     ]
 
-    # --- ミオ (mio) ルールベーステンプレート ---
+    # --- こはる (mio) ルールベーステンプレート ---
     MIO_PRAISE = [
         {"fortune": "大吉", "katsu": "すごいやん！うちもめっちゃ嬉しいわ！🌸", "advice": "5日連続達成やね！ほんまにキミは頑張り屋さんやなぁ。毎日コツコツ続けるんは大変やったやろうに、偉い！自分をいーっぱい褒めてあげね。", "next_action_advice": "明日も無理のない範囲で、お茶でも飲みながら一緒に進めていこな。"},
         {"fortune": "大吉", "katsu": "パーフェクト！キミの努力が満開やね！🌺", "advice": "うわぁ、5日間も連続で！キミの頑張る姿を見てて、うちまで心がポカポカしてきたわぁ。習慣のご褒備に、今日はちょっと甘いものでも食べよか？", "next_action_advice": "明日はスタート前に、深呼吸を3回してリラックスして取り組んでみてね。"}
@@ -137,7 +137,7 @@ class LLMFeedbackService(AIFeedbackService):
                 db.close()
 
             if not system_instruction:
-                system_instruction = SYSTEM_PROMPTS.get(character, SYSTEM_PROMPTS["ogami"])
+                system_instruction = SYSTEM_PROMPTS.get(character, SYSTEM_PROMPTS["ai_ch_01"])
 
             # ユーザープロンプトの設定
             if category == "total_review":
@@ -194,7 +194,7 @@ class LLMFeedbackService(AIFeedbackService):
         achievement_rate = round((achieved_count / len(records)) * 100) if records else 0
         is_high_achievement = (achievement_rate >= 80)
 
-        if character == "mio":
+        if character == "ai_ch_02":
             if category == "total_review":
                 fallback_data = random.choice(self.MIO_TOTAL_REVIEW_HIGH) if is_high_achievement else random.choice(self.MIO_TOTAL_REVIEW_LOW)
             elif category == "scold":
@@ -236,7 +236,7 @@ class LLMFeedbackService(AIFeedbackService):
             db.close()
 
         if not system_instruction:
-            system_instruction = SYSTEM_PROMPTS.get(character_id, SYSTEM_PROMPTS["ogami"])
+            system_instruction = SYSTEM_PROMPTS.get(character_id, SYSTEM_PROMPTS["ai_ch_01"])
 
         # ユーザープロンプトの構築
         prompt = "【過去のやり取り】\n"
@@ -254,27 +254,27 @@ class LLMFeedbackService(AIFeedbackService):
         prompt += "【指示】\n"
         prompt += "過去のやり取りを踏まえ、ユーザーの傾向（サボりがち、継続できている等）を把握した上でアドバイスを行ってください。\n"
         
-        if character_id == "mio":
+        if character_id == "ai_ch_02":
             if not followed_plan:
                 prompt += "・計画通りに進められなかったみたい。お姉さんとして優しく、でも少し寂しそうに叱ってあげて。\n"
             if consecutive_days >= 7:
                 prompt += f"・{consecutive_days}日も続いてるなんて、自分のことのように喜んで褒めちぎってあげて。\n"
-            prompt += "・ミオとして、計画に対するおみくじの結果をJSONで返してね。"
+            prompt += "・こはるとして、計画に対するおみくじの結果をJSONで返してね。"
         else:
             if not followed_plan:
                 prompt += "・計画をサボっている。冒頭で厳しく叱責せよ。\n"
             if consecutive_days >= 7:
                 prompt += f"・{consecutive_days}日も続いていることは、少しだけ（ツンデレ気味に）認めてやれ。\n"
-            prompt += "・大神様として、計画に対するおみくじの結果をJSONで返せ。"
+            prompt += "・巌狼として、計画に対するおみくじの結果をJSONで返せ。"
 
         try:
             # LLM呼び出し
             json_response = self.llm_client.generate_json_response(system_instruction, prompt)
             
             fortune = json_response.get("fortune", random.choice(self.fortunes))
-            katsu = json_response.get("katsu", "喝！" if character_id == "ogami" else "あらあら")
-            advice = json_response.get("advice", "精進せよ。" if character_id == "ogami" else "無理しないでね。")
-            next_action_advice = json_response.get("next_action_advice", "まずは机に向かうのだ。" if character_id == "ogami" else "ゆっくり準備しようね。")
+            katsu = json_response.get("katsu", "喝！" if character_id == "ai_ch_01" else "あらあら")
+            advice = json_response.get("advice", "精進せよ。" if character_id == "ai_ch_01" else "無理しないでね。")
+            next_action_advice = json_response.get("next_action_advice", "まずは机に向かうのだ。" if character_id == "ai_ch_01" else "ゆっくり準備しようね。")
             
             return fortune, katsu, advice, next_action_advice
 
@@ -283,7 +283,7 @@ class LLMFeedbackService(AIFeedbackService):
 
         # --- ルールベースのフォールバック ---
         fortune = random.choice(self.fortunes)
-        if character_id == "mio":
+        if character_id == "ai_ch_02":
             katsu = "あらあら"
             advice = "無理しないでね。ボチボチいこな。"
             next_action_advice = "ゆっくり準備しようね。"

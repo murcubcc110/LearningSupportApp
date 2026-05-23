@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
 
     # App Settings
-    APP_TITLE: str = "大神様の愛の鞭 API"
+    APP_TITLE: str = "巌狼の愛の鞭 API"
     APP_VERSION: str = "1.0.0"
     CORS_ORIGINS: List[str] = ["*"]
 

@@ -18,7 +18,7 @@ class TrackerDB(Base):
     created_at = Column(DateTime, default=datetime.datetime.now, nullable=False)
     ai_comment = Column(String, default="新しいチャレンジが始まりました！最初の一歩を踏み出しましょう。", nullable=True)
     ai_status = Column(String, default="encourage", nullable=True)
-    character = Column(String, default="ogami", nullable=False)
+    character = Column(String, default="ai_ch_01", nullable=False)
 
     records = relationship("DailyRecordDB", back_populates="tracker", cascade="all, delete-orphan", order_by="DailyRecordDB.day_number")
 
@@ -44,7 +44,7 @@ class CharacterDB(Base):
     """
     __tablename__ = "characters"
 
-    id = Column(String, primary_key=True, index=True)  # "ogami", "mio"
+    id = Column(String, primary_key=True, index=True)  # "ai_ch_01", "ai_ch_02"
     name = Column(String, nullable=False)
     avatar_url = Column(String, nullable=False)
     system_prompt = Column(String, nullable=False)
