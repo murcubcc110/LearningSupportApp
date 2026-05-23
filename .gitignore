@@ -1,0 +1,23 @@
+# --- プロジェクトのログファイル ---
+*.log
+toggle_debug.log
+
+# --- Python 自動生成・キャッシュファイル ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Python 仮想環境 ---
+venv/
+env/
+.venv/
+
+# --- 環境変数・シークレット ---
+.env
+.env.local
+
+# --- OS・エディタ関連ファイル ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

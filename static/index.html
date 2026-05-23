@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大神様の愛の鞭 - 学習継続支援おみくじ</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="character-selector">
+            <div class="char-option active" data-char="ogami">
+                <img src="/static/ogami_sama.png" alt="大神様">
+                <span>大神様</span>
+            </div>
+            <div class="char-option" data-char="mio">
+                <img src="/static/mio.png" alt="ミオ">
+                <span>ミオ</span>
+            </div>
+        </div>
+
+        <main class="main-card">
+            <section class="character-side">
+                <img src="/static/ogami_sama.png" alt="大神様" class="ogami-img" id="ogami-avatar">
+                <div class="title-area">
+                    <h1>大神様の愛の鞭</h1>
+                    <p>山の神の使い、白狼が貴様の甘えを断つ</p>
+                </div>
+            </section>
+
+            <section class="form-side">
+                <div class="input-group">
+                    <label for="user_id">貴様の識別名（ユーザーID）</label>
+                    <input type="text" id="user_id" placeholder="例: 怠惰な人間" value="名無しの修練者">
+                </div>
+
+                <div class="input-group">
+                    <label for="consecutive_days">連続修練日数</label>
+                    <input type="number" id="consecutive_days" value="0" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label>計画通りに進められたか？</label>
+                    <div class="radio-group">
+                        <input type="radio" id="task_yes" name="previous_task" value="true" checked>
+                        <label for="task_yes">はい</label>
+                        
+                        <input type="radio" id="task_no" name="previous_task" value="false">
+                        <label for="task_no">いいえ</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="user_message">大神様へ一言（愚痴、困り事、今の気持ち）</label>
+                    <textarea id="user_message" rows="3" placeholder="例: 昨日は眠くてサボってしまいました..."></textarea>
+                </div>
+
+                <button class="btn-submit" id="btn-generate">御神託を仰ぐ</button>
+
+                <div class="loading" id="loader">
+                    <div class="spinner"></div>
+                    <p>降臨中...</p>
+                </div>
+            </section>
+        </main>
+
+        <section id="result-area">
+            <div class="result-card">
+                <div id="fortune-badge" class="fortune-badge">中吉</div>
+                <div id="katsu-text" class="katsu-text">「喝！！」</div>
+                <p id="advice-text" class="advice-text"></p>
+                <div class="training-box">
+                    <h4>明日への一歩</h4>
+                    <p id="training-text"></p>
+                </div>
+                <button class="btn-submit" style="margin-top: 2rem; background: var(--bg-dark);" onclick="location.reload()">再び修練に励む</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

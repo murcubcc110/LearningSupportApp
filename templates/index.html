@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Habit Companion - 習慣トラッカー</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Outfit & Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Cropper.js (Image Cropping Library) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(26, 16, 60, 0.4) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(13, 148, 136, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-gold {
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);
+            border-color: rgba(234, 179, 8, 0.4);
+        }
+        .glow-rose {
+            box-shadow: 0 0 25px rgba(244, 63, 94, 0.25);
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.25);
+            border-color: rgba(168, 85, 247, 0.4);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* スムーズなアニメーション遷移用 */
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen pb-16">
+
+    <!-- ナビゲーションバー -->
+    <header class="w-full py-6 px-8 border-b border-slate-800/60 glass-card sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <!-- ロゴのSVG -->
+                <div class="p-2.5 bg-gradient-to-tr from-indigo-500 to-teal-400 rounded-xl shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">AI Habit Companion</h1>
+                    <p class="text-xs text-slate-400">褒めて・叱って伸ばすAI習慣化コーチ</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-xs px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-teal-400 font-semibold flex items-center gap-1.5 shadow-inner">
+                    <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                    System Active
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 左カラム: チャレンジの作成・切り替え (4列) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- チャレンジ作成カード -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    新規チャレンジ開始
+                </h2>
+                
+                <form action="/tracker/create" method="POST" class="space-y-4">
+                    <div>
+                        <label for="title" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">習慣チャレンジ名</label>
+                        <input type="text" id="title" name="title" required placeholder="例: 毎日30分プログラミング" 
+                               class="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-inner text-sm transition-all-300">
+                    </div>
+                    
+                    <div>
+                        <label for="period_days" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex justify-between">
+                            <span>チャレンジ期間</span>
+                            <span id="period_val" class="text-indigo-400 font-bold">7 日間</span>
+                        </label>
+                        <input type="range" id="period_days" name="period_days" min="1" max="14" value="7" 
+                               oninput="document.getElementById('period_val').innerText = this.value + ' 日間'"
+                               class="w-full accent-indigo-500 cursor-pointer bg-slate-800 h-2 rounded-lg appearance-none">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
+                            <span>1日</span>
+                            <span>7日</span>
+                            <span>14日</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/25 transition-all-300 hover:scale-[1.02] active:scale-[0.98] flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        チャレンジ起動！
+                    </button>
+                </form>
+            </div>
+
+            <!-- 履歴リストカード -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl flex-grow">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    登録中のチャレンジ一覧
+                </h2>
+                
+                {% if trackers %}
+                <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    {% for t in trackers %}
+                    <div class="p-3.5 rounded-xl transition-all-300 flex justify-between items-center border {% if t.id == active_tracker.id %} bg-indigo-950/30 border-indigo-500/50 glow-indigo {% else %} bg-slate-950/40 border-slate-800/80 hover:border-slate-700 {% endif %}">
+                        <a href="/?tracker_id={{ t.id }}" class="flex-grow min-w-0 pr-2">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-slate-200 truncate">{{ t.title }}</h3>
+                                {% if t.is_active %}
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20">進行中</span>
+                                {% else %}
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">終了</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">期間: {{ t.period_days }}日間 ({{ t.start_date.strftime('%m/%d') }}〜)</p>
+                        </a>
+                        
+                        <!-- 削除ボタン -->
+                        <form action="/tracker/{{ t.id }}/delete" method="POST" onsubmit="return confirm('このチャレンジデータを完全に削除しますか？');">
+                            <button type="submit" class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <p class="text-xs text-slate-500">登録されているチャレンジはありません。上のフォームから新しく開始しましょう！</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- 右カラム: アクティブなチャレンジ進捗・AIフィードバック (8列) -->
+        <section class="lg:col-span-8 flex flex-col gap-8">
+            
+            {% if active_tracker %}
+            <!-- トラッカーヘッダー情報・進捗統計 -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Active Challenge</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                            <span class="text-xs text-slate-400">開始日: {{ active_tracker.start_date.strftime('%Y年%m月%d日') }}</span>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-white mt-1">{{ active_tracker.title }}</h2>
+                    </div>
+                    
+                    <div class="flex gap-2 relative z-10">
+                        <!-- トラッカー状態トグル -->
+                        <form action="/tracker/{{ active_tracker.id }}/toggle-active" method="POST">
+                            <button type="submit" 
+                                    class="px-4 py-2 rounded-xl text-xs font-bold border transition-all-300 {% if active_tracker.is_active %} bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-slate-800 {% else %} bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 {% endif %} cursor-pointer">
+                                {% if active_tracker.is_active %} 進行中 (完了にする) {% else %} チャレンジ終了 (再開する) {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 統計グリッド -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-800/80">
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">チャレンジ期間</p>
+                        <p class="text-lg font-bold text-slate-200 mt-1">{{ active_tracker.period_days }}日間</p>
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">達成した日数</p>
+                        <p class="text-lg font-bold text-emerald-400 mt-1" id="stats-achieved-count">{{ stats.achieved_days }} 日</p>
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">達成率</p>
+                        <p class="text-lg font-bold text-indigo-400 mt-1" id="stats-achievement-rate">{{ stats.rate }} %</p>
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">現在の連続達成</p>
+                        <p class="text-lg font-bold text-yellow-400 mt-1 flex items-center gap-1">
+                            <span id="stats-current-streak">{{ stats.streak }}</span>
+                            <span class="text-xs text-slate-400 font-normal">日連続</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- プログレスバー -->
+                <div class="mt-5">
+                    <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+                        <span>全体の進捗状況</span>
+                        <span id="stats-progress-percent" class="font-bold text-teal-400">{{ stats.progress_percent }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                        <div id="stats-progress-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-teal-400 h-2.5 rounded-full transition-all-300" style="width: {{ stats.progress_percent }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AIフィードバック表示部分 -->
+            <div id="ai-feedback-container" 
+                 class="glass-card rounded-2xl p-6 shadow-2xl border transition-all-300 relative overflow-hidden {% if active_tracker.ai_status == 'total_review' %} glow-purple {% elif active_tracker.ai_status == 'praise' %} glow-gold {% elif active_tracker.ai_status == 'scold' %} glow-rose {% else %} glow-indigo {% endif %}">
+                
+                <!-- 装飾用ぼかし -->
+                <div class="absolute -left-10 -bottom-10 w-24 h-24 rounded-full blur-3xl opacity-20 {% if active_tracker.ai_status == 'total_review' %} bg-purple-500 {% elif active_tracker.ai_status == 'praise' %} bg-yellow-500 {% elif active_tracker.ai_status == 'scold' %} bg-rose-500 {% else %} bg-indigo-500 {% endif %} pointer-events-none"></div>
+                
+                <div class="flex items-start gap-4">
+                    <!-- アバター -->
+                    <div class="flex-shrink-0 relative">
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all-300 overflow-hidden border-2 {% if active_tracker.ai_status == 'total_review' %} border-purple-500/50 {% elif active_tracker.ai_status == 'praise' %} border-yellow-500/50 {% elif active_tracker.ai_status == 'scold' %} border-rose-500/50 {% else %} border-indigo-500/50 {% endif %}" id="ai-avatar-bg">
+                            <img id="ai-avatar-img" src="{{ characters_map[active_tracker.character].avatar_url }}" class="w-full h-full object-cover">
+                        </div>
+                        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-900 text-[10px] flex items-center justify-center shadow font-black {% if active_tracker.ai_status == 'total_review' %} bg-purple-500 text-slate-100 {% elif active_tracker.ai_status == 'praise' %} bg-yellow-500 text-slate-950 {% elif active_tracker.ai_status == 'scold' %} bg-rose-500 text-slate-100 {% else %} bg-indigo-500 text-slate-100 {% endif %}" id="ai-badge">
+                            {% if active_tracker.ai_status == 'total_review' %} 評 {% elif active_tracker.ai_status == 'praise' %} 褒 {% elif active_tracker.ai_status == 'scold' %} 叱 {% else %} 導 {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- コメント本文 -->
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center w-full mb-3 flex-wrap gap-2">
+                            <span class="text-xs font-extrabold tracking-wider text-slate-400 flex items-center gap-1.5">
+                                AI COACH FEEDBACK
+                                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            </span>
+                            
+                            <div class="flex items-center gap-3">
+                                <!-- キャラクターセレクター -->
+                                <div class="flex items-center gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80">
+                                    <button onclick="changeCharacter('ogami')" id="btn-char-ogami" 
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'ogami' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
+                                        <img id="btn-char-img-ogami" src="{{ characters_map['ogami'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
+                                        <span id="btn-char-name-ogami">{{ characters_map['ogami'].name }}</span> 🐺
+                                    </button>
+                                    <button onclick="changeCharacter('mio')" id="btn-char-mio" 
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 {% if active_tracker.character == 'mio' %} bg-indigo-500 text-white shadow-md {% else %} text-slate-400 hover:text-slate-200 {% endif %}">
+                                        <img id="btn-char-img-mio" src="{{ characters_map['mio'].avatar_url }}" class="w-3.5 h-3.5 rounded-full object-cover">
+                                        <span id="btn-char-name-mio">{{ characters_map['mio'].name }}</span> 🌸
+                                    </button>
+                                    <!-- 設定ギアボタン -->
+                                    <button onclick="openCharacterSettingsModal()" 
+                                            class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all-300 flex items-center justify-center cursor-pointer ml-0.5 border border-transparent hover:border-slate-700" 
+                                            title="キャラクター設定を編集">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider {% if active_tracker.ai_status == 'total_review' %} bg-purple-500/15 text-purple-400 {% elif active_tracker.ai_status == 'praise' %} bg-yellow-500/15 text-yellow-400 {% elif active_tracker.ai_status == 'scold' %} bg-rose-500/15 text-rose-400 {% else %} bg-indigo-500/15 text-indigo-400 {% endif %}" id="ai-status-label">
+                                    {% if active_tracker.ai_status == 'total_review' %} Final Review {% elif active_tracker.ai_status == 'praise' %} Highly Praise {% elif active_tracker.ai_status == 'scold' %} Motivate/Scold {% else %} Standard Encourage {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 space-y-3.5">
+                            <!-- 運勢 & 一言 (喝) -->
+                            <div class="flex flex-wrap items-center gap-3">
+                                <!-- 運勢バッジ -->
+                                <span id="ai-fortune-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-black tracking-wider shadow-md bg-gradient-to-r {% if ai_comment_parsed.fortune in ['大吉', '吉'] %} from-yellow-500 to-amber-400 text-slate-950 {% elif ai_comment_parsed.fortune in ['中吉', '小吉'] %} from-teal-500 to-emerald-400 text-white {% else %} from-rose-500 to-pink-500 text-white {% endif %}">
+                                    運勢: <span id="ai-fortune-text">{{ ai_comment_parsed.fortune }}</span>
+                                </span>
+                                <!-- 魂の一言 (喝) -->
+                                <span id="ai-katsu-text" class="text-sm font-extrabold text-indigo-300 italic">
+                                    「{{ ai_comment_parsed.katsu }}」
+                                </span>
+                            </div>
+                            
+                            <!-- メインアドバイス -->
+                            <div class="text-slate-200 leading-relaxed text-sm bg-slate-950/40 p-4 rounded-xl border border-slate-800/80 shadow-inner min-h-[60px]" id="ai-advice-box">
+                                {{ ai_comment_parsed.advice }}
+                            </div>
+                            
+                            <!-- 次の一歩 -->
+                            <div class="p-3.5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl flex items-start gap-2.5" id="ai-next-action-container">
+                                <span class="flex-shrink-0 p-1 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-indigo-400 tracking-wider">具体的な次の一歩</h4>
+                                    <p id="ai-next-action-text" class="text-xs text-slate-300 mt-1 font-medium">{{ ai_comment_parsed.next_action_advice }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1〜14日の進捗グリッド UI -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        チャレンジロード（進捗状況）
+                    </h2>
+                    <span class="text-xs text-slate-400">各日にちのボタンをクリックしてステータスを記録</span>
+                </div>
+
+                <!-- グリッド表示 -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="progress-grid">
+                    {% for r in active_tracker.records %}
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between items-center transition-all-300 relative group overflow-hidden" 
+                         id="card-day-{{ r.day_number }}">
+                        
+                        <!-- 背景装飾用の光 -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950/90 pointer-events-none"></div>
+                        
+                        <!-- ステータスに合わせた枠線の変更 -->
+                        <script>
+                            document.addEventListener("DOMContentLoaded", () => {
+                                const card = document.getElementById("card-day-{{ r.day_number }}");
+                                updateCardBorder(card, "{{ r.status }}");
+                            });
+                        </script>
+
+                        <!-- 日数表示 -->
+                        <div class="text-center z-10">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">DAY</span>
+                            <h3 class="text-3xl font-extrabold text-white leading-none mt-1">{{ r.day_number }}</h3>
+                        </div>
+
+                        <!-- 中央ステータスアイコン -->
+                        <div class="my-4 z-10" id="status-icon-container-{{ r.day_number }}">
+                            {% if r.status == 'achieved' %}
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            {% elif r.status == 'slacked' %}
+                            <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center shadow-lg shadow-rose-500/10 animate-bounce-short">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                            {% else %}
+                            <div class="w-12 h-12 rounded-full bg-slate-900 text-slate-600 border border-slate-800 flex items-center justify-center shadow-inner">
+                                <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 記録ボタン（達成・さぼり） -->
+                        <div class="flex gap-2 w-full mt-2 z-10">
+                            <!-- 達成ボタン -->
+                            <button onclick="updateRecordStatus({{ active_tracker.id }}, {{ r.day_number }}, 'achieved')" 
+                                    class="flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 {% if r.status == 'achieved' %} bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 {% else %} bg-slate-900 text-emerald-500/80 hover:bg-emerald-500/10 border border-slate-800 {% endif %}"
+                                    id="btn-achieved-{{ r.day_number }}">
+                                達成
+                            </button>
+                            <!-- さぼりボタン -->
+                            <button onclick="updateRecordStatus({{ active_tracker.id }}, {{ r.day_number }}, 'slacked')" 
+                                    class="flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 {% if r.status == 'slacked' %} bg-rose-500 text-slate-950 shadow-md shadow-rose-500/20 {% else %} bg-slate-900 text-rose-500/80 hover:bg-rose-500/10 border border-slate-800 {% endif %}"
+                                    id="btn-slacked-{{ r.day_number }}">
+                                サボり
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <!-- トラッカーが未作成の場合のウェルカムプレースホルダー -->
+            <div class="glass-card rounded-2xl p-10 shadow-xl text-center flex flex-col items-center justify-center py-20 relative overflow-hidden">
+                <div class="absolute w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -top-10 -left-10 pointer-events-none"></div>
+                <div class="absolute w-60 h-60 bg-teal-500/5 rounded-full blur-3xl -bottom-10 -right-10 pointer-events-none"></div>
+                
+                <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl text-indigo-400 mb-6 relative">
+                    <svg class="w-16 h-16 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                
+                <h2 class="text-2xl font-black text-white tracking-tight">習慣化チャレンジを始めましょう！</h2>
+                <p class="text-slate-400 mt-3 text-sm max-w-md">
+                    左側のフォームから「習慣のタイトル」と「期間 (1〜14日間)」を設定してチャレンジを開始すると、ここに毎日のロードマップとAIからのフィードバックが表示されます。
+                </p>
+                
+                <div class="mt-8 p-4 rounded-xl border border-slate-800 bg-slate-950/40 text-left max-w-lg">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
+                        AIコーチからの一言
+                    </h3>
+                    <p class="text-xs text-slate-400 italic">
+                        「はじめの一歩が最も重いものですが、それは同時に素晴らしい旅路の始まりでもあります。あなたの習慣化の旅路を、私が全力でガイドします！」
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+    </main>
+
+    <!-- AJAX通信用のスクリプト -->
+    <script>
+        // カードのステータスに応じたボーダースタイルの設定
+        function updateCardBorder(cardElement, status) {
+            if (!cardElement) return;
+            cardElement.classList.remove("border-slate-800", "border-emerald-500/40", "border-rose-500/40", "bg-emerald-950/10", "bg-rose-950/10", "shadow-emerald-500/5", "shadow-rose-500/5");
+            
+            if (status === 'achieved') {
+                cardElement.classList.add("border-emerald-500/40", "bg-emerald-950/10", "shadow-emerald-500/5");
+            } else if (status === 'slacked') {
+                cardElement.classList.add("border-rose-500/40", "bg-rose-950/10", "shadow-rose-500/5");
+            } else {
+                cardElement.classList.add("border-slate-800");
+            }
+        }
+
+        // AJAXでステータスを更新する関数
+        async function updateRecordStatus(trackerId, dayNumber, newStatus) {
+            try {
+                // ローディング中のエフェクト（ボタンの不透明度を一時的に下げる）
+                const btnAchieved = document.getElementById(`btn-achieved-${dayNumber}`);
+                const btnSlacked = document.getElementById(`btn-slacked-${dayNumber}`);
+                if (btnAchieved) btnAchieved.style.opacity = "0.7";
+                if (btnSlacked) btnSlacked.style.opacity = "0.7";
+
+                const response = await fetch(`/tracker/${trackerId}/record/${dayNumber}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!response.ok) {
+                    throw new Error('ネットワーク接続エラーが発生しました。');
+                }
+
+                const data = await response.json();
+                
+                // --- 1. グリッドの各日カードを動的に更新 ---
+                const card = document.getElementById(`card-day-${dayNumber}`);
+                updateCardBorder(card, newStatus);
+
+                // アイコンの切り替え
+                const iconContainer = document.getElementById(`status-icon-container-${dayNumber}`);
+                if (iconContainer) {
+                    if (newStatus === 'achieved') {
+                        iconContainer.innerHTML = `
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        `;
+                    } else if (newStatus === 'slacked') {
+                        iconContainer.innerHTML = `
+                            <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center justify-center shadow-lg shadow-rose-500/10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                        `;
+                    } else {
+                        iconContainer.innerHTML = `
+                            <div class="w-12 h-12 rounded-full bg-slate-900 text-slate-600 border border-slate-800 flex items-center justify-center shadow-inner">
+                                <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        `;
+                    }
+                }
+
+                // ボタンのアクティブ状態切り替え
+                if (btnAchieved && btnSlacked) {
+                    btnAchieved.style.opacity = "1";
+                    btnSlacked.style.opacity = "1";
+                    
+                    if (newStatus === 'achieved') {
+                        btnAchieved.className = "flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20";
+                        btnSlacked.className = "flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 bg-slate-900 text-rose-500/80 hover:bg-rose-500/10 border border-slate-800";
+                    } else if (newStatus === 'slacked') {
+                        btnAchieved.className = "flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 bg-slate-900 text-emerald-500/80 hover:bg-emerald-500/10 border border-slate-800";
+                        btnSlacked.className = "flex-1 py-1.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all-300 bg-rose-500 text-slate-950 shadow-md shadow-rose-500/20";
+                    }
+                }
+
+                // --- 2. 統計情報の更新 ---
+                const stats = data.stats;
+                document.getElementById('stats-achieved-count').innerText = `${stats.achieved_days} 日`;
+                document.getElementById('stats-achievement-rate').innerText = `${stats.rate} %`;
+                document.getElementById('stats-current-streak').innerText = stats.streak;
+                document.getElementById('stats-progress-percent').innerText = `${stats.progress_percent}%`;
+                document.getElementById('stats-progress-bar').style.width = `${stats.progress_percent}%`;
+
+                // --- 3. AIフィードバック表示の動的更新 ---
+                updateAICoachUI(data);
+
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('達成状況の更新に失敗しました。ページを再読み込みして再度お試しください。');
+            }
+        }
+
+        // キャラクター切り替え用の非同期関数
+        async function changeCharacter(charName) {
+            const trackerId = "{{ active_tracker.id }}";
+            if (!trackerId) return;
+
+            try {
+                // キャラクターボタンの状態を一時的に無効化
+                const btnOgami = document.getElementById("btn-char-ogami");
+                const btnMio = document.getElementById("btn-char-mio");
+                if (btnOgami) btnOgami.style.opacity = "0.7";
+                if (btnMio) btnMio.style.opacity = "0.7";
+
+                const response = await fetch(`/tracker/${trackerId}/character`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ character: charName })
+                });
+
+                if (!response.ok) {
+                    throw new Error('キャラクター切り替えエラーが発生しました。');
+                }
+
+                const data = await response.json();
+                
+                // ボタンの不透明度を戻す
+                if (btnOgami) btnOgami.style.opacity = "1";
+                if (btnMio) btnMio.style.opacity = "1";
+
+                // AIコーチUIを更新
+                updateAICoachUI(data);
+
+            } catch (error) {
+                console.error('Error changing character:', error);
+                alert('キャラクターの切り替えに失敗しました。');
+                const btnOgami = document.getElementById("btn-char-ogami");
+                const btnMio = document.getElementById("btn-char-mio");
+                if (btnOgami) btnOgami.style.opacity = "1";
+                if (btnMio) btnMio.style.opacity = "1";
+            }
+        }
+
+        // AIコーチUIを更新する共通関数
+        function updateAICoachUI(data) {
+            const aiContainer = document.getElementById('ai-feedback-container');
+            const aiAvatarBg = document.getElementById('ai-avatar-bg');
+            const aiAvatarImg = document.getElementById('ai-avatar-img');
+            const aiBadge = document.getElementById('ai-badge');
+            const aiStatusLabel = document.getElementById('ai-status-label');
+            
+            const btnOgami = document.getElementById('btn-char-ogami');
+            const btnMio = document.getElementById('btn-char-mio');
+            
+            const fortuneBadge = document.getElementById('ai-fortune-badge');
+            const fortuneText = document.getElementById('ai-fortune-text');
+            const katsuText = document.getElementById('ai-katsu-text');
+            const adviceBox = document.getElementById('ai-advice-box');
+            const nextActionText = document.getElementById('ai-next-action-text');
+
+            // フェードアウト効果
+            const fadeTargets = [fortuneBadge, katsuText, adviceBox, nextActionText];
+            fadeTargets.forEach(el => { if (el) el.style.opacity = "0.3"; });
+
+            setTimeout(() => {
+                // 1. キャラクター切り替えボタンのアクティブ表示更新
+                if (btnOgami && btnMio) {
+                    if (data.character === 'ogami') {
+                        btnOgami.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 bg-indigo-500 text-white shadow-md";
+                        btnMio.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 text-slate-400 hover:text-slate-200";
+                    } else {
+                        btnOgami.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 text-slate-400 hover:text-slate-200";
+                        btnMio.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all-300 flex items-center gap-1 bg-indigo-500 text-white shadow-md";
+                    }
+                }
+
+                // 2. アバター画像の更新
+                if (aiAvatarImg) {
+                    aiAvatarImg.src = data.character_avatar || (data.character === 'mio' ? '/static/mio.png' : '/static/ogami_sama.png');
+                }
+
+                // 3. AIステータス（praise, scold, encourage, total_review）に応じた枠線の切り替え
+                if (aiContainer) {
+                    aiContainer.className = "glass-card rounded-2xl p-6 shadow-2xl border transition-all-300 relative overflow-hidden";
+                    if (data.ai_status === 'total_review') {
+                        aiContainer.classList.add("glow-purple");
+                    } else if (data.ai_status === 'praise') {
+                        aiContainer.classList.add("glow-gold");
+                    } else if (data.ai_status === 'scold') {
+                        aiContainer.classList.add("glow-rose");
+                    } else {
+                        aiContainer.classList.add("glow-indigo");
+                    }
+                }
+
+                // 4. アバター背景枠の更新
+                if (aiAvatarBg) {
+                    aiAvatarBg.className = "w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all-300 overflow-hidden border-2";
+                    if (data.ai_status === 'total_review') {
+                        aiAvatarBg.classList.add("border-purple-500/50");
+                    } else if (data.ai_status === 'praise') {
+                        aiAvatarBg.classList.add("border-yellow-500/50");
+                    } else if (data.ai_status === 'scold') {
+                        aiAvatarBg.classList.add("border-rose-500/50");
+                    } else {
+                        aiAvatarBg.classList.add("border-indigo-500/50");
+                    }
+                }
+
+                // 5. バッジ文字・色の更新
+                if (aiBadge) {
+                    aiBadge.className = "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-900 text-[10px] flex items-center justify-center shadow font-black";
+                    if (data.ai_status === 'total_review') {
+                        aiBadge.className += " bg-purple-500 text-slate-100";
+                        aiBadge.innerText = "評";
+                    } else if (data.ai_status === 'praise') {
+                        aiBadge.className += " bg-yellow-500 text-slate-950";
+                        aiBadge.innerText = "褒";
+                    } else if (data.ai_status === 'scold') {
+                        aiBadge.className += " bg-rose-500 text-slate-100";
+                        aiBadge.innerText = "叱";
+                    } else {
+                        aiBadge.className += " bg-indigo-500 text-slate-100";
+                        aiBadge.innerText = "導";
+                    }
+                }
+
+                // 6. ステータスラベルの更新
+                if (aiStatusLabel) {
+                    aiStatusLabel.className = "text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider";
+                    if (data.ai_status === 'total_review') {
+                        aiStatusLabel.classList.add("bg-purple-500/15", "text-purple-400");
+                        aiStatusLabel.innerText = "Final Review";
+                    } else if (data.ai_status === 'praise') {
+                        aiStatusLabel.classList.add("bg-yellow-500/15", "text-yellow-400");
+                        aiStatusLabel.innerText = "Highly Praise";
+                    } else if (data.ai_status === 'scold') {
+                        aiStatusLabel.classList.add("bg-rose-500/15", "text-rose-400");
+                        aiStatusLabel.innerText = "Motivate/Scold";
+                    } else {
+                        aiStatusLabel.classList.add("bg-indigo-500/15", "text-indigo-400");
+                        aiStatusLabel.innerText = "Standard Encourage";
+                    }
+                }
+
+                // 7. パースされたJSONコメントの各要素の更新
+                const parsed = data.ai_comment_parsed;
+                if (fortuneText) fortuneText.innerText = parsed.fortune;
+                
+                if (fortuneBadge) {
+                    fortuneBadge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-black tracking-wider shadow-md bg-gradient-to-r";
+                    if (parsed.fortune === '大吉' || parsed.fortune === '吉') {
+                        fortuneBadge.classList.add("from-yellow-500", "to-amber-400", "text-slate-950");
+                    } else if (parsed.fortune === '中吉' || parsed.fortune === '小吉') {
+                        fortuneBadge.classList.add("from-teal-500", "to-emerald-400", "text-white");
+                    } else {
+                        fortuneBadge.classList.add("from-rose-500", "to-pink-500", "text-white");
+                    }
+                }
+
+                if (katsuText) katsuText.innerText = `「${parsed.katsu}」`;
+                if (adviceBox) adviceBox.innerText = parsed.advice;
+                if (nextActionText) nextActionText.innerText = parsed.next_action_advice;
+
+                // フェードイン効果の適用
+                fadeTargets.forEach(el => {
+                    if (el) {
+                        el.style.opacity = "1";
+                        el.style.transition = "opacity 0.3s ease";
+                    }
+                });
+
+            }, 200);
+        }
+
+        // --- キャラクター設定モーダル管理用変数と関数 ---
+        let allCharacters = [];
+
+        function openCharacterSettingsModal() {
+            // キャラクター一覧をサーバーから取得
+            fetch('/tracker/characters')
+                .then(response => {
+                    if (!response.ok) throw new Error('キャラクター設定の取得に失敗しました。');
+                    return response.json();
+                })
+                .then(data => {
+                    allCharacters = data;
+                    
+                    // モーダルを表示
+                    const modal = document.getElementById('char-settings-modal');
+                    modal.classList.remove('hidden');
+                    
+                    // 初期表示するキャラクターのID（現在選択中のキャラクター）
+                    let currentActive = 'ogami';
+                    const btnMio = document.getElementById('btn-char-mio');
+                    if (btnMio && btnMio.classList.contains('bg-indigo-500')) {
+                        currentActive = 'mio';
+                    }
+                    
+                    switchModalTab(currentActive);
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('キャラクター設定の読み込みに失敗しました。');
+                });
+        }
+
+        function closeCharacterSettingsModal() {
+            const modal = document.getElementById('char-settings-modal');
+            modal.classList.add('hidden');
+            // クロップ作業状態とファイルをリセット
+            cancelCropping();
+            croppedBlob = null;
+        }
+
+        function switchModalTab(charId) {
+            const tabOgami = document.getElementById('modal-tab-ogami');
+            const tabMio = document.getElementById('modal-tab-mio');
+            
+            if (charId === 'ogami') {
+                tabOgami.className = "flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center";
+                tabMio.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center";
+            } else {
+                tabOgami.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center";
+                tabMio.className = "flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center";
+            }
+            
+            // 編集対象のキャラクターIDをセット
+            document.getElementById('edit-char-id').value = charId;
+            
+            // キャラクターデータをフォームに入力
+            const character = allCharacters.find(c => c.id === charId);
+            if (character) {
+                document.getElementById('edit-char-name').value = character.name;
+                document.getElementById('edit-char-prompt').value = character.system_prompt;
+                document.getElementById('edit-avatar-preview').src = character.avatar_url;
+            }
+            
+            // クロップ作業状態とファイルをリセット
+            cancelCropping();
+            croppedBlob = null;
+        }
+
+        // --- クロップ用グローバル変数 ---
+        let cropperInstance = null;
+        let croppedBlob = null;
+
+        function initImageCropper(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const cropperImage = document.getElementById('cropper-image');
+                cropperImage.src = e.target.result;
+                
+                // プレビューとアップロードフォームを隠し、切り抜きワークスペースを表示
+                document.getElementById('avatar-upload-section').classList.add('hidden');
+                document.getElementById('cropper-workspace').classList.remove('hidden');
+                
+                // 古いCropperインスタンスがあれば破棄
+                if (cropperInstance) {
+                    cropperInstance.destroy();
+                }
+                
+                // Cropperを1:1アスペクト比で初期化
+                cropperInstance = new Cropper(cropperImage, {
+                    aspectRatio: 1,      // 1:1スクエア固定
+                    viewMode: 1,         // 画像の内側にのみクロップ枠を制限
+                    dragMode: 'move',    // 画像のドラッグ移動を許可
+                    autoCropArea: 0.9,   // クロップ枠の初期サイズ割合
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelCropping() {
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+            
+            // 表示を通常状態に戻す
+            document.getElementById('avatar-upload-section').classList.remove('hidden');
+            document.getElementById('cropper-workspace').classList.add('hidden');
+            
+            // ファイル選択インプットをクリア
+            document.getElementById('edit-avatar-file').value = '';
+        }
+
+        function applyCroppedImage() {
+            if (!cropperInstance) return;
+            
+            // 切り抜いた部分を300x300サイズでCanvasとして取得
+            const canvas = cropperInstance.getCroppedCanvas({
+                width: 300,
+                height: 300
+            });
+            
+            // モーダル内のプレビュー画像を更新
+            document.getElementById('edit-avatar-preview').src = canvas.toDataURL('image/png');
+            
+            // 送信用のBlob形式に変換して保持
+            canvas.toBlob((blob) => {
+                croppedBlob = blob;
+            }, 'image/png');
+            
+            // クロップ画面を閉じる
+            cancelCropping();
+        }
+
+        async function saveCharacterSettings(event) {
+            event.preventDefault();
+            
+            const charId = document.getElementById('edit-char-id').value;
+            const name = document.getElementById('edit-char-name').value;
+            const systemPrompt = document.getElementById('edit-char-prompt').value;
+            
+            const btnSave = document.getElementById('btn-save-char-settings');
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.disabled = true;
+            btnSave.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                保存中...
+            `;
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('system_prompt', systemPrompt);
+            if (croppedBlob) {
+                formData.append('avatar_file', croppedBlob, 'avatar.png');
+            }
+            
+            try {
+                const response = await fetch('/tracker/characters/' + charId, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || '保存に失敗しました。');
+                }
+                
+                const data = await response.json();
+                const updatedChar = data.character;
+                
+                // 1. ローカルキャッシュ配列の更新
+                const charIndex = allCharacters.findIndex(c => c.id === charId);
+                if (charIndex !== -1) {
+                    allCharacters[charIndex] = updatedChar;
+                }
+                
+                // 2. メイン画面のUIをリアルタイム更新
+                // 切り替えボタン内のアバター画像と名前を更新
+                const btnImg = document.getElementById('btn-char-img-' + charId);
+                const btnName = document.getElementById('btn-char-name-' + charId);
+                if (btnImg) btnImg.src = updatedChar.avatar_url;
+                if (btnName) btnName.innerText = updatedChar.name;
+                
+                // 現在アクティブなキャラクターが更新された場合、AI Coachのアバターも更新
+                const isActive = (charId === 'ogami' && document.getElementById('btn-char-ogami').classList.contains('bg-indigo-500')) ||
+                                 (charId === 'mio' && document.getElementById('btn-char-mio').classList.contains('bg-indigo-500'));
+                                 
+                if (isActive) {
+                    const aiAvatarImg = document.getElementById('ai-avatar-img');
+                    if (aiAvatarImg) aiAvatarImg.src = updatedChar.avatar_url;
+                }
+                
+                closeCharacterSettingsModal();
+                showToast(updatedChar.name + ' の設定を更新しました！');
+                
+            } catch (error) {
+                console.error(error);
+                alert('設定の保存中にエラーが発生しました: ' + error.message);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalBtnText;
+            }
+        }
+
+        async function resetCharacterToDefault() {
+            const charId = document.getElementById('edit-char-id').value;
+            const character = allCharacters.find(c => c.id === charId);
+            const charDisplayName = character ? character.name : 'このキャラクター';
+            
+            if (!confirm(charDisplayName + ' の設定を初期状態（デフォルト）に戻しますか？')) {
+                return;
+            }
+            
+            const btnSave = document.getElementById('btn-save-char-settings');
+            const originalBtnText = btnSave.innerHTML;
+            btnSave.disabled = true;
+            
+            try {
+                const response = await fetch('/tracker/characters/' + charId + '/reset', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || '初期化に失敗しました。');
+                }
+                
+                const data = await response.json();
+                const updatedChar = data.character;
+                
+                // 1. ローカルキャッシュ配列の更新
+                const charIndex = allCharacters.findIndex(c => c.id === charId);
+                if (charIndex !== -1) {
+                    allCharacters[charIndex] = updatedChar;
+                }
+                
+                // 2. 編集フォーム内の表示を即時更新
+                document.getElementById('edit-char-name').value = updatedChar.name;
+                document.getElementById('edit-char-prompt').value = updatedChar.system_prompt;
+                document.getElementById('edit-avatar-preview').src = updatedChar.avatar_url;
+                
+                // 3. メイン画面のUIを更新
+                const btnImg = document.getElementById('btn-char-img-' + charId);
+                const btnName = document.getElementById('btn-char-name-' + charId);
+                if (btnImg) btnImg.src = updatedChar.avatar_url;
+                if (btnName) btnName.innerText = updatedChar.name;
+                
+                const isActive = (charId === 'ogami' && document.getElementById('btn-char-ogami').classList.contains('bg-indigo-500')) ||
+                                 (charId === 'mio' && document.getElementById('btn-char-mio').classList.contains('bg-indigo-500'));
+                                 
+                if (isActive) {
+                    const aiAvatarImg = document.getElementById('ai-avatar-img');
+                    if (aiAvatarImg) aiAvatarImg.src = updatedChar.avatar_url;
+                }
+                
+                closeCharacterSettingsModal();
+                showToast(updatedChar.name + ' を初期設定に戻しました！');
+                
+            } catch (error) {
+                console.error(error);
+                alert('初期化中にエラーが発生しました: ' + error.message);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalBtnText;
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 z-50 glass-card text-emerald-400 px-5 py-3 rounded-xl border border-emerald-500/30 text-xs font-bold transition-all duration-500 translate-y-10 opacity-0 shadow-lg flex items-center gap-2";
+            toast.innerHTML = `
+                <span class="p-1 bg-emerald-500/10 rounded-lg text-emerald-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </span>
+            ` + message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 500);
+            }, 3000);
+        }
+    </script>
+
+    <!-- キャラクター設定編集モーダル -->
+    <div id="char-settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all-300">
+        <div class="glass-card rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col relative max-h-[90vh]">
+            <!-- モーダルヘッダー -->
+            <div class="px-6 py-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/50">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <h3 class="text-lg font-bold text-white">AIキャラクター設定の編集</h3>
+                </div>
+                <button onclick="closeCharacterSettingsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-all-300 cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- モーダルコンテンツ (タブナビゲーション) -->
+            <div class="flex border-b border-slate-800/80 bg-slate-950/20">
+                <button id="modal-tab-ogami" type="button" onclick="switchModalTab('ogami')" class="flex-1 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition-all-300 cursor-pointer text-center">
+                    キャラクターA（旧: 大神様）
+                </button>
+                <button id="modal-tab-mio" type="button" onclick="switchModalTab('mio')" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all-300 cursor-pointer text-center">
+                    キャラクターB（旧: ミオ）
+                </button>
+            </div>
+
+            <!-- フォームエリア -->
+            <form id="char-settings-form" onsubmit="saveCharacterSettings(event)" class="flex-grow flex flex-col overflow-y-auto p-6 space-y-6">
+                <!-- 選択中のキャラクターID保持用非表示フィールド -->
+                <input type="hidden" id="edit-char-id" value="ogami">
+
+                <!-- 1. 画像アップロードとプレビュー -->
+                <div class="flex items-center gap-6" id="avatar-upload-section">
+                    <div class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-950 shadow-inner flex-shrink-0">
+                        <img id="edit-avatar-preview" src="/static/ogami_sama.png" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer" onclick="document.getElementById('edit-avatar-file').click()">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-grow space-y-2">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">アバター画像 (ローカルファイル)</label>
+                        <input type="file" id="edit-avatar-file" accept="image/*" class="hidden" onchange="initImageCropper(event)">
+                        <button type="button" onclick="document.getElementById('edit-avatar-file').click()" class="px-4 py-2 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all-300 cursor-pointer flex items-center gap-1.5 shadow-sm">
+                            画像ファイルを選択
+                        </button>
+                        <p class="text-[10px] text-slate-500">※ PNG, JPG 形式をサポートしています。最大容量 5MB。</p>
+                    </div>
+                </div>
+
+                <!-- 画像切り抜きワークスペース (初期状態は非表示) -->
+                <div id="cropper-workspace" class="hidden flex flex-col gap-4 p-4 rounded-xl border border-slate-800 bg-slate-950/60 transition-all-300">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">アバター画像の切り抜き (1:1 スクエア)</span>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="cancelCropping()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700 rounded-lg text-[11px] font-bold transition-all-300 cursor-pointer">
+                                キャンセル
+                            </button>
+                            <button type="button" onclick="applyCroppedImage()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[11px] font-bold transition-all-300 shadow-md shadow-indigo-600/25 cursor-pointer">
+                                切り抜きを適用
+                            </button>
+                        </div>
+                    </div>
+                    <div class="max-h-[300px] overflow-hidden rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center">
+                        <img id="cropper-image" class="max-w-full max-h-[280px] block">
+                    </div>
+                </div>
+
+                <!-- 2. キャラクター名 -->
+                <div>
+                    <label for="edit-char-name" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">キャラクター名</label>
+                    <input type="text" id="edit-char-name" required placeholder="キャラクターの名前を入力"
+                           class="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-inner text-sm transition-all-300">
+                </div>
+
+                <!-- 3. プロンプト設定 -->
+                <div class="flex flex-col flex-grow">
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="edit-char-prompt" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">キャラクター設定・口調（プロンプト）</label>
+                        <span class="text-[10px] text-indigo-400 font-medium">※ JSONフォーマット指示は自動付与されるため不要です。</span>
+                    </div>
+                    <textarea id="edit-char-prompt" required placeholder="一人称、性格、口調、ユーザーの行動に対するフィードバック方針を記述します。例：貴様は『大神様』だ。語尾は『～だ』にせよ..."
+                              class="w-full h-48 px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-inner text-sm transition-all-300 font-mono resize-none leading-relaxed"></textarea>
+                </div>
+
+                <!-- フッターアクション -->
+                <div class="pt-4 border-t border-slate-800/80 flex gap-3 justify-end items-center bg-slate-950/20">
+                    <!-- デフォルト初期化ボタン -->
+                    <button type="button" onclick="resetCharacterToDefault()" 
+                            class="mr-auto px-4 py-2.5 bg-slate-900/60 hover:bg-rose-500/10 text-rose-400 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-bold transition-all-300 cursor-pointer flex items-center gap-1.5"
+                            title="このキャラクターを初期設定に戻す">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5M4 4h5v.581"></path>
+                        </svg>
+                        デフォルトに戻す
+                    </button>
+                    
+                    <button type="button" onclick="closeCharacterSettingsModal()" 
+                            class="px-5 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-bold transition-all-300 cursor-pointer">
+                        キャンセル
+                    </button>
+                    <button type="submit" id="btn-save-char-settings"
+                            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/25 transition-all-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        設定を保存する
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

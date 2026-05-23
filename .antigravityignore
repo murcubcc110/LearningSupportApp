@@ -1,0 +1,43 @@
+# .antigravityignore
+
+# 1. 依存ライブラリ（最も重要：ファイル数が多くトークンを大量消費します）
+node_modules/
+.venv/
+venv/
+env/
+site-packages/
+
+# 2. ビルド成果物・キャッシュ（AIが読む必要のない自動生成ファイル）
+dist/
+build/
+.next/
+.nuxt/
+out/
+*.pyc
+__pycache__/
+.cache/
+
+# 3. ログ・データファイル（巨大なテキストファイルはコンピュートを一瞬で枯渇させます）
+*.log
+logs/
+*.csv
+*.json
+*.sqlite3
+*.db
+
+# 4. メディア・アセット（AIが解析できない・あるいは不要なバイナリ）
+images/
+assets/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.pdf
+
+# 5. エディタ・IDE固有の設定
+.vscode/
+.idea/
+.DS_Store
+.env
