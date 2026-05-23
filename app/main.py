@@ -101,32 +101,40 @@ def init_databases():
             ogami = CharacterDB(
                 id="ai_ch_01",
                 name="巌狼",
-                avatar_url="/static/ogami_sama.png",
+                avatar_url="/static/genro.png",
                 system_prompt=ogami_prompt
             )
             db.add(ogami)
             logger.info("Database seeded: ai_ch_01 added.")
-        elif ogami.name == "大神様":
-            ogami.name = "巌狼"
+        else:
+            if ogami.name == "大神様":
+                ogami.name = "巌狼"
+                logger.info("Database migration: updated ai_ch_01 name to default.")
+            if ogami.avatar_url == "/static/ogami_sama.png":
+                ogami.avatar_url = "/static/genro.png"
+                logger.info("Database migration: updated ai_ch_01 avatar_url to /static/genro.png.")
             ogami.system_prompt = ogami_prompt
             db.add(ogami)
-            logger.info("Database migration: updated ai_ch_01 name and prompt to default.")
 
         mio = db.query(CharacterDB).filter(CharacterDB.id == "ai_ch_02").first()
         if not mio:
             mio = CharacterDB(
                 id="ai_ch_02",
                 name="こはる",
-                avatar_url="/static/mio.png",
+                avatar_url="/static/koharu.png",
                 system_prompt=mio_prompt
             )
             db.add(mio)
             logger.info("Database seeded: ai_ch_02 added.")
-        elif mio.name == "ミオ":
-            mio.name = "こはる"
+        else:
+            if mio.name == "ミオ":
+                mio.name = "こはる"
+                logger.info("Database migration: updated ai_ch_02 name to default.")
+            if mio.avatar_url == "/static/mio.png":
+                mio.avatar_url = "/static/koharu.png"
+                logger.info("Database migration: updated ai_ch_02 avatar_url to /static/koharu.png.")
             mio.system_prompt = mio_prompt
             db.add(mio)
-            logger.info("Database migration: updated ai_ch_02 name and prompt to default.")
             
         db.commit()
     except Exception as e:

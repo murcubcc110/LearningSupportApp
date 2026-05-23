@@ -94,8 +94,8 @@ def read_root(
             def __init__(self, name, avatar_url):
                 self.name = name
                 self.avatar_url = avatar_url
-        characters_map["ai_ch_01"] = DummyChar("巌狼", "/static/ogami_sama.png")
-        characters_map["ai_ch_02"] = DummyChar("こはる", "/static/mio.png")
+        characters_map["ai_ch_01"] = DummyChar("巌狼", "/static/genro.png")
+        characters_map["ai_ch_02"] = DummyChar("こはる", "/static/koharu.png")
 
     return templates.TemplateResponse(
         request=request,
@@ -147,7 +147,7 @@ def update_record(
         
         char_db = db.query(CharacterDB).filter(CharacterDB.id == updated_tracker.character).first()
         char_name = char_db.name if char_db else ("こはる" if updated_tracker.character == "ai_ch_02" else "巌狼")
-        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "ai_ch_02" else "/static/ogami_sama.png")
+        char_avatar = char_db.avatar_url if char_db else ("/static/koharu.png" if updated_tracker.character == "ai_ch_02" else "/static/genro.png")
         
         return JSONResponse(content={
             "status": "success",
@@ -182,7 +182,7 @@ def update_character(
         
         char_db = db.query(CharacterDB).filter(CharacterDB.id == updated_tracker.character).first()
         char_name = char_db.name if char_db else ("こはる" if updated_tracker.character == "ai_ch_02" else "巌狼")
-        char_avatar = char_db.avatar_url if char_db else ("/static/mio.png" if updated_tracker.character == "ai_ch_02" else "/static/ogami_sama.png")
+        char_avatar = char_db.avatar_url if char_db else ("/static/koharu.png" if updated_tracker.character == "ai_ch_02" else "/static/genro.png")
         
         return JSONResponse(content={
             "status": "success",
@@ -323,11 +323,11 @@ def reset_character_settings(
 
     if character_id == "ai_ch_01":
         character.name = "巌狼"
-        character.avatar_url = "/static/ogami_sama.png"
+        character.avatar_url = "/static/genro.png"
         character.system_prompt = SYSTEM_PROMPTS["ai_ch_01"].replace(COMMON_JSON_FORMAT, "").strip()
     elif character_id == "ai_ch_02":
         character.name = "こはる"
-        character.avatar_url = "/static/mio.png"
+        character.avatar_url = "/static/koharu.png"
         character.system_prompt = SYSTEM_PROMPTS["ai_ch_02"].replace(COMMON_JSON_FORMAT, "").strip()
     else:
         raise HTTPException(status_code=400, detail="無効なキャラクターIDです。")

@@ -15,12 +15,12 @@ document.querySelectorAll('.char-option').forEach(option => {
         const desc = document.querySelector('.title-area p');
         
         if (selectedChar === 'ai_ch_02') {
-            avatar.src = '/static/mio.png';
+            avatar.src = '/static/koharu.png';
             avatar.alt = 'こはる';
             title.textContent = 'こはるの癒やしとお導き';
             desc.textContent = 'お姉さんのように、時にはお母さんのように見守るよ';
         } else {
-            avatar.src = '/static/ogami_sama.png';
+            avatar.src = '/static/genro.png';
             avatar.alt = '巌狼';
             title.textContent = '巌狼の愛の鞭';
             desc.textContent = '山の神の使い、白狼が貴様の甘えを断つ';
